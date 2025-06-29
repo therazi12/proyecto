@@ -1,0 +1,235 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Promociones{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-tags me-2"></i>Gestión de Promociones
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">Promociones</li>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas Mini -->
+<div class="stats-mini">
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ estadisticas.total }}</div>
+        <div class="stat-mini-label">Total Promociones</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ estadisticas.activas }}</div>
+        <div class="stat-mini-label">Activas</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ "%.1f"|format(estadisticas.descuento_promedio) }}%</div>
+        <div class="stat-mini-label">Descuento Promedio</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ "%.1f"|format(estadisticas.descuento_maximo) }}%</div>
+        <div class="stat-mini-label">Mayor Descuento</div>
+    </div>
+</div>
+
+<!-- Acciones Principales -->
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-list me-2 text-primary"></i>
+            Lista de Promociones
+        </h3>
+        <a href="{{ url_for('main.nueva_promocion') }}" class="btn btn-crud-primary">
+            <i class="fas fa-plus me-2"></i>Nueva Promoción
+        </a>
+    </div>
+
+    {% if promociones_data %}
+    <div class="table-responsive">
+        <table class="table crud-table mb-0">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                    <th><i class="fas fa-align-left me-1"></i>Descripción</th>
+                    <th><i class="fas fa-percentage me-1"></i>Descuento</th>
+                    <th><i class="fas fa-calendar-plus me-1"></i>Inicio</th>
+                    <th><i class="fas fa-calendar-minus me-1"></i>Fin</th>
+                    <th><i class="fas fa-info-circle me-1"></i>Estado</th>
+                    <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in promociones_data %}
+                {% set p = item.promocion %}
+                <tr>
+                    <td><strong>#{{ p.id }}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-tag text-muted me-2"></i>
+                            <div>
+                                <strong>{{ p.descripcion[:50] + '...' if p.descripcion|length > 50 else p.descripcion }}</strong>
+                                {% if p.descripcion|length > 50 %}
+                                    <br><small class="text-muted" title="{{ p.descripcion }}">Ver completa...</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; font-size: 1rem; padding: 0.5rem 1rem;">
+                            {{ "%.1f"|format(p.descuento) }}% OFF
+                        </span>
+                    </td>
+                    <td>
+                        <div class="text-center">
+                            <strong>{{ p.fecha_inicio.strftime('%d/%m/%Y') if p.fecha_inicio else 'N/A' }}</strong>
+                            <br>
+                            <small class="text-muted">{{ p.fecha_inicio.strftime('%a') if p.fecha_inicio else '' }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-center">
+                            <strong>{{ p.fecha_fin.strftime('%d/%m/%Y') if p.fecha_fin else 'N/A' }}</strong>
+                            <br>
+                            <small class="text-muted">{{ p.fecha_fin.strftime('%a') if p.fecha_fin else '' }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge badge-status {{ item.estado_class }}">
+                            {% if item.estado == 'Activa' %}
+                                <i class="fas fa-check-circle me-1"></i>{{ item.estado }}
+                            {% elif item.estado == 'Próxima' %}
+                                <i class="fas fa-clock me-1"></i>{{ item.estado }}
+                            {% else %}
+                                <i class="fas fa-times-circle me-1"></i>{{ item.estado }}
+                            {% endif %}
+                        </span>
+                        {% if item.dias_restantes > 0 and item.activa %}
+                            <br><small class="text-muted">{{ item.dias_restantes }} días restantes</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('main.editar_promocion', id=p.id) }}" 
+                               class="btn btn-crud-warning" 
+                               title="Editar promoción">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('main.eliminar_promocion', id=p.id) }}" 
+                                  method="post" 
+                                  style="display:inline;"
+                                  onsubmit="return confirm('¿Está seguro de que desea eliminar la promoción {{ p.descripcion[:30] }}? Esta acción no se puede deshacer.')">
+                                <button type="submit" 
+                                        class="btn btn-crud-danger" 
+                                        title="Eliminar promoción">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-tags text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+        <h4 class="text-muted mt-3">No hay promociones registradas</h4>
+        <p class="text-muted">Comience creando ofertas atractivas para sus clientes.</p>
+        <a href="{{ url_for('main.nueva_promocion') }}" class="btn btn-crud-primary mt-3">
+            <i class="fas fa-plus me-2"></i>Crear Primera Promoción
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Información Adicional -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-chart-line me-2 text-info"></i>
+        Estadísticas de Promociones
+    </h5>
+    <div class="row">
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Total promociones:</strong> 
+                <span class="text-primary">{{ estadisticas.total }}</span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Promociones activas:</strong> 
+                <span class="text-success">{{ estadisticas.activas }}</span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Descuento promedio:</strong> 
+                <span class="text-info">{{ "%.1f"|format(estadisticas.descuento_promedio) }}%</span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Mayor descuento:</strong> 
+                <span class="text-warning">{{ "%.1f"|format(estadisticas.descuento_maximo) }}%</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Promociones Destacadas -->
+{% if estadisticas.promociones_destacadas %}
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-star me-2 text-warning"></i>
+        Promociones Destacadas
+    </h5>
+    <div class="row">
+        {% for p in estadisticas.promociones_destacadas %}
+        <div class="col-md-4 mb-3">
+            <div class="card border-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">{{ p.descripcion[:30] + '...' if p.descripcion|length > 30 else p.descripcion }}</h6>
+                        <span class="badge bg-success">{{ "%.1f"|format(p.descuento) }}%</span>
+                    </div>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Del {{ p.fecha_inicio.strftime('%d/%m/%Y') if p.fecha_inicio else 'N/A' }} 
+                            al {{ p.fecha_fin.strftime('%d/%m/%Y') if p.fecha_fin else 'N/A' }}
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tooltip para descripciones largas
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltips = document.querySelectorAll('[title]');
+    tooltips.forEach(function(element) {
+        element.setAttribute('data-bs-toggle', 'tooltip');
+    });
+    
+    // Inicializar tooltips de Bootstrap si están disponibles
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        const tooltipList = [...tooltips].map(el => new bootstrap.Tooltip(el));
+    }
+    
+    // Auto-refresh cada 5 minutos para actualizar estados
+    setTimeout(function() {
+        window.location.reload();
+    }, 300000); // 5 minutos
+});
+</script>
+{% endblock %}

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión - Hotel Paraíso Real</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span></span>
+            <div>
+                <a href="{{ url_for('main.home') }}" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+                <span class="lang-select ms-3">ES <span style="font-size:10px;">▼</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Logo -->
+    <header class="text-center py-4">
+        <div class="hotel-logo">
+            <div class="stars">★ ★ ★ ★</div>
+            <div class="hotel-title">HOTEL PARAÍSO REAL</div>
+            <div class="hotel-subtitle">Tu descanso, nuestro compromiso</div>
+        </div>
+    </header>
+
+    <!-- Login Section -->
+    <section class="login-section py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-5 col-md-7">
+                    <div class="login-card">
+                        <div class="login-header text-center mb-4">
+                            <i class="fas fa-user-circle login-icon"></i>
+                            <h2 class="login-title">Iniciar Sesión</h2>
+                            <p class="login-subtitle">Accede a tu cuenta del hotel</p>
+                        </div>
+
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                                <div class="alert alert-danger alert-custom">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {% for message in messages %}
+                                        <span>{{ message }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" class="login-form">
+                            <div class="form-group mb-4">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope"></i> Correo Electrónico
+                                </label>
+                                <input type="email" 
+                                       class="form-control form-control-custom" 
+                                       id="email" 
+                                       name="email" 
+                                       placeholder="tu-email@ejemplo.com"
+                                       required>
+                            </div>
+
+                            <div class="form-group mb-4">
+                                <label for="contraseña" class="form-label">
+                                    <i class="fas fa-lock"></i> Contraseña
+                                </label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" 
+                                           class="form-control form-control-custom" 
+                                           id="contraseña" 
+                                           name="contraseña" 
+                                           placeholder="Tu contraseña"
+                                           required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                                        <i class="fas fa-eye" id="password-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="remember">
+                                    <label class="form-check-label" for="remember">
+                                        Recordarme
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-gold btn-login w-100 mb-3">
+                                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                            </button>
+
+                            <div class="text-center">
+                                <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                            </div>
+                        </form>
+
+                        <div class="login-divider">
+                            <span>o</span>
+                        </div>
+
+                        <div class="text-center">
+                            <p class="register-link">
+                                ¿No tienes cuenta? 
+                                <a href="{{ url_for('main.register') }}">Regístrate aquí</a>
+                            </p>
+                        </div>
+
+                        <!-- Demo credentials -->
+                        <div class="demo-credentials">
+                            <h6><i class="fas fa-info-circle"></i> Credenciales de prueba:</h6>
+                            <div class="demo-item">
+                                <strong>Admin:</strong> admin@hotel.com / Admin123
+                            </div>
+                            <div class="demo-item">
+                                <strong>Empleado:</strong> empleado@hotel.com / Empleado123
+                            </div>
+                            <div class="demo-item">
+                                <strong>Cliente:</strong> cliente@hotel.com / Cliente123
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer info -->
+    <footer class="footer-section text-center py-4">
+        <div class="container">
+            <p class="mb-0">© 2025 Hotel Paraíso Real. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('contraseña');
+            const passwordIcon = document.getElementById('password-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.classList.remove('fa-eye');
+                passwordIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.classList.remove('fa-eye-slash');
+                passwordIcon.classList.add('fa-eye');
+            }
+        }
+
+        // Auto-fill demo credentials
+        function fillDemo(email, password) {
+            document.getElementById('email').value = email;
+            document.getElementById('contraseña').value = password;
+        }
+
+        // Add click events to demo credentials
+        document.addEventListener('DOMContentLoaded', function() {
+            const demoItems = document.querySelectorAll('.demo-item');
+            demoItems.forEach(item => {
+                item.style.cursor = 'pointer';
+                item.addEventListener('click', function() {
+                    const text = this.textContent;
+                    if (text.includes('admin@hotel.com')) {
+                        fillDemo('admin@hotel.com', 'Admin123');
+                    } else if (text.includes('empleado@hotel.com')) {
+                        fillDemo('empleado@hotel.com', 'Empleado123');
+                    } else if (text.includes('cliente@hotel.com')) {
+                        fillDemo('cliente@hotel.com', 'Cliente123');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

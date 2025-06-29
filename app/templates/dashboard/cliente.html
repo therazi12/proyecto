@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Dashboard - Hotel Paraíso Real</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
+</head>
+<body class="modern-dashboard-body">
+    <!-- Modern Top Navigation -->
+    <nav class="modern-dashboard-navbar">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center justify-content-between w-100">
+                <div class="navbar-brand-modern d-flex align-items-center">
+                    <div class="brand-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="hotel-name">Hotel Paraíso Real</span>
+                        <span class="brand-subtitle">Dashboard Cliente</span>
+                    </div>
+                </div>
+                
+                <div class="modern-nav-actions d-flex align-items-center gap-3">
+                    <div class="notification-bell">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">{{ (reservas|length + promociones|length) if (reservas and promociones) else '0' }}</span>
+                    </div>
+                    
+                    <div class="user-profile-dropdown">
+                        <div class="user-avatar" data-bs-toggle="dropdown">
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=50&q=80" alt="User Avatar">
+                            <div class="avatar-status"></div>
+                        </div>
+                        <div class="user-info">
+                            <span class="user-greeting">Hola,</span>
+                            <span class="user-name-modern">{{ usuario.nombre.split()[0] }}</span>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end modern-dropdown">
+                            <li class="dropdown-header">
+                                <div class="d-flex align-items-center">
+                                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=60&q=80" alt="User" class="dropdown-avatar">
+                                    <div class="ms-3">
+                                        <div class="fw-bold">{{ usuario.nombre }}</div>
+                                        <small class="text-muted">Cliente Premium</small>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="#mis-reservas"><i class="fas fa-calendar-check"></i> Mis Reservas</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-heart"></i> Favoritos</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('main.logout') }}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Modern Hero Dashboard Section -->
+    <section class="modern-hero-dashboard">
+        <div class="hero-bg-pattern"></div>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="hero-content-modern">
+                        <div class="welcome-badge">
+                            <i class="fas fa-sparkles"></i>
+                            Bienvenido de vuelta
+                        </div>
+                        <h1 class="modern-hero-title">
+                            Hola {{ usuario.nombre.split()[0] }}, 
+                            <span class="gradient-text">¿Listo para tu próxima aventura?</span>
+                        </h1>
+                        <p class="modern-hero-subtitle">
+                            Descubre nuestras habitaciones exclusivas y servicios de lujo diseñados para crear experiencias memorables
+                        </p>
+                        <div class="modern-stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon rooms">
+                                    <i class="fas fa-bed"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <span class="stat-number">{{ habitaciones|length }}</span>
+                                    <span class="stat-label">Habitaciones Disponibles</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon bookings">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <span class="stat-number">{{ reservas|length if reservas else 0 }}</span>
+                                    <span class="stat-label">Reservas Activas</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon offers">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <span class="stat-number">{{ promociones|length if promociones else 0 }}</span>
+                                    <span class="stat-label">Ofertas Especiales</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="hero-visual">
+                        <div class="floating-card main-card">
+                            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80" alt="Luxury Hotel">
+                            <div class="card-overlay">
+                                <div class="luxury-badge">
+                                    <i class="fas fa-crown"></i>
+                                    Suite Premium
+                                </div>
+                            </div>
+                        </div>
+                        <div class="floating-card secondary-card">
+                            <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=300&q=80" alt="Hotel Amenities">
+                        </div>
+                        <div class="floating-elements">
+                            <div class="floating-icon icon-1">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                            <div class="floating-icon icon-2">
+                                <i class="fas fa-spa"></i>
+                            </div>
+                            <div class="floating-icon icon-3">
+                                <i class="fas fa-swimming-pool"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modern Quick Actions -->
+    <section class="modern-quick-actions">
+        <div class="container">
+            <div class="actions-grid">
+                <div class="action-item" onclick="scrollToRooms()">
+                    <div class="action-icon search">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="action-content">
+                        <h4>Explorar Habitaciones</h4>
+                        <p>Descubre nuestras suites premium</p>
+                    </div>
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+                
+                <div class="action-item" onclick="scrollToReservations()">
+                    <div class="action-icon calendar">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="action-content">
+                        <h4>Mis Reservas</h4>
+                        <p>Gestiona tus estancias</p>
+                    </div>
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+                
+                <div class="action-item" onclick="scrollToOffers()">
+                    <div class="action-icon offers">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="action-content">
+                        <h4>Ofertas Exclusivas</h4>
+                        <p>Aprovecha nuestros descuentos</p>
+                    </div>
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-icon services">
+                        <i class="fas fa-concierge-bell"></i>
+                    </div>
+                    <div class="action-content">
+                        <h4>Servicios VIP</h4>
+                        <p>Experiencias personalizadas</p>
+                    </div>
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modern Room Filters -->
+    <section class="modern-filters-section">
+        <div class="container">
+            <div class="filters-header">
+                <div class="section-title-modern">
+                    <div class="title-icon">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <div class="title-content">
+                        <h2>Habitaciones Premium</h2>
+                        <p>Elige tu experiencia perfecta</p>
+                    </div>
+                </div>
+                <div class="filters-controls">
+                    <div class="filter-group">
+                        <label for="typeFilter" class="filter-label">
+                            <i class="fas fa-home"></i>
+                            Tipo de Habitación
+                        </label>
+                        <select class="modern-select" id="typeFilter">
+                            <option value="">Todos los tipos</option>
+                            {% for tipo in tipos %}
+                                <option value="{{ tipo.nombre }}">{{ tipo.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="priceFilter" class="filter-label">
+                            <i class="fas fa-dollar-sign"></i>
+                            Rango de Precio
+                        </label>
+                        <select class="modern-select" id="priceFilter">
+                            <option value="">Todos los precios</option>
+                            <option value="0-50">$0 - $50</option>
+                            <option value="51-100">$51 - $100</option>
+                            <option value="101-200">$101 - $200</option>
+                            <option value="201-999">$201+</option>
+                        </select>
+                    </div>
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="grid">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="view-btn" data-view="list">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modern Rooms Gallery -->
+    <section class="modern-rooms-gallery" id="rooms-section">
+        <div class="container">
+            <div class="rooms-grid" id="roomsContainer">
+                {% for habitacion in habitaciones %}
+                <div class="modern-room-card room-item" 
+                     data-type="{{ habitacion.tipo_hab.nombre }}" 
+                     data-price="{{ habitacion.precio }}">
+                    
+                    <div class="room-image-container">
+                        {% set room_images = [
+                            'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=600&q=80'
+                        ] %}
+                        <img src="{{ room_images[loop.index0 % 6] }}" alt="Habitación {{ habitacion.numero }}" class="room-main-image">
+                        
+                        <div class="room-overlay-content">
+                            <div class="room-badges-container">
+                                <span class="room-type-badge">{{ habitacion.tipo_hab.nombre }}</span>
+                                {% if habitacion.precio < 70 %}
+                                    <span class="special-offer-badge">
+                                        <i class="fas fa-fire"></i>
+                                        Oferta Especial
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="room-quick-actions">
+                                <button class="quick-action-btn heart-btn">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                <button class="quick-action-btn share-btn">
+                                    <i class="fas fa-share-alt"></i>
+                                </button>
+                                <button class="quick-action-btn view-btn">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="availability-indicator">
+                            <span class="available-dot"></span>
+                            Disponible
+                        </div>
+                    </div>
+                    
+                    <div class="modern-room-content">
+                        <div class="room-header-modern">
+                            <div class="room-title-section">
+                                <h3 class="room-name">{{ habitacion.tipo }} - Suite {{ habitacion.numero }}</h3>
+                                <div class="room-rating-modern">
+                                    <div class="stars">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <span class="rating-score">4.9</span>
+                                </div>
+                            </div>
+                            <div class="room-price-modern">
+                                <span class="currency">$</span>
+                                <span class="amount">{{ "%.0f"|format(habitacion.precio) }}</span>
+                                <span class="period">/noche</span>
+                            </div>
+                        </div>
+                        
+                        <p class="room-description-modern">{{ habitacion.descripcion[:80] }}...</p>
+                        
+                        <div class="amenities-modern">
+                            <div class="amenity-chip">
+                                <i class="fas fa-wifi"></i>
+                                WiFi Premium
+                            </div>
+                            <div class="amenity-chip">
+                                <i class="fas fa-car"></i>
+                                Parking VIP
+                            </div>
+                            <div class="amenity-chip">
+                                <i class="fas fa-swimming-pool"></i>
+                                Piscina Infinita
+                            </div>
+                            <div class="amenity-chip">
+                                <i class="fas fa-spa"></i>
+                                Spa & Wellness
+                            </div>
+                            <div class="amenity-chip">
+                                <i class="fas fa-concierge-bell"></i>
+                                Concierge 24/7
+                            </div>
+                            <div class="amenity-chip">
+                                <i class="fas fa-utensils"></i>
+                                Room Service
+                            </div>
+                        </div>
+                        
+                        <div class="room-actions-modern">
+                            <button class="btn-book-modern" onclick="openBookingModal({{ habitacion.id }}, '{{ habitacion.numero }}', {{ habitacion.precio }})">
+                                <i class="fas fa-calendar-plus"></i>
+                                Reservar Ahora
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- User Reservations -->
+    {% if reservas %}
+    <section class="user-reservations py-5 bg-light" id="mis-reservas">
+        <div class="container">
+            <h3 class="section-title">
+                <i class="fas fa-calendar-check me-2"></i>
+                Mis Reservas Recientes
+            </h3>
+            <div class="row g-3">
+                {% for reserva in reservas %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="reservation-card">
+                        <div class="reservation-header">
+                            <span class="reservation-id">#{{ reserva.id }}</span>
+                            <span class="reservation-status status-{{ reserva.estado }}">{{ reserva.estado.title() }}</span>
+                        </div>
+                        <div class="reservation-content">
+                            <h5>Habitación {{ reserva.habitacion.numero }}</h5>
+                            <p class="reservation-dates">
+                                <i class="fas fa-calendar me-2"></i>
+                                {{ reserva.fecha_inicio.strftime('%d/%m/%Y') }} - {{ reserva.fecha_fin.strftime('%d/%m/%Y') }}
+                            </p>
+                            <div class="reservation-services">
+                                {% for servicio in reserva.servicios %}
+                                    <span class="service-tag">{{ servicio.nombre }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Special Offers -->
+    {% if promociones %}
+    <section class="special-offers py-5" id="ofertas">
+        <div class="container">
+            <h3 class="section-title">
+                <i class="fas fa-gift me-2"></i>
+                Ofertas Especiales Para Ti
+            </h3>
+            <div class="row g-4">
+                {% for promocion in promociones %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="offer-card">
+                        <div class="offer-badge">{{ "%.0f"|format(promocion.descuento) }}% OFF</div>
+                        <div class="offer-content">
+                            <h5>{{ promocion.descripcion }}</h5>
+                            <p>Válida hasta: {{ promocion.fecha_fin.strftime('%d/%m/%Y') }}</p>
+                            <button class="btn btn-offer">Aplicar Descuento</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Booking Modal -->
+    <div class="modal fade" id="bookingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Reservar Habitación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="quickBookingForm">
+                        <input type="hidden" id="modalRoomId" name="habitacion_id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha de Entrada</label>
+                                <input type="date" class="form-control" name="fecha_inicio" required min="{{ today.strftime('%Y-%m-%d') if today else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha de Salida</label>
+                                <input type="date" class="form-control" name="fecha_fin" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Servicios Extra (Opcional)</label>
+                                <div class="services-grid">
+                                    {% for servicio in servicios %}
+                                    <div class="form-check service-check">
+                                        <input class="form-check-input" type="checkbox" name="servicios" value="{{ servicio.id }}" id="service{{ servicio.id }}">
+                                        <label class="form-check-label" for="service{{ servicio.id }}">
+                                            {{ servicio.nombre }} (+${{ servicio.precio }})
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="booking-summary mt-4">
+                            <h6>Resumen de Reserva:</h6>
+                            <div id="bookingSummary"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-gold" onclick="submitBooking()">Confirmar Reserva</button>
+                </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+        
+        function scrollToRooms() {
+            document.getElementById('rooms-section').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function scrollToReservations() {
+            const element = document.getElementById('mis-reservas');
+            if (element) element.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function scrollToOffers() {
+            const element = document.getElementById('ofertas');
+            if (element) element.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ========================================
+        // ROOM FILTERING
+        // ========================================
+        
+        function initializeFilters() {
+            const typeFilter = document.getElementById('typeFilter');
+            const priceFilter = document.getElementById('priceFilter');
+            
+            if (typeFilter) typeFilter.addEventListener('change', filterRooms);
+            if (priceFilter) priceFilter.addEventListener('change', filterRooms);
+        }
+
+        function filterRooms() {
+            const typeFilter = document.getElementById('typeFilter').value;
+            const priceFilter = document.getElementById('priceFilter').value;
+            const rooms = document.querySelectorAll('.room-item');
+
+            rooms.forEach(room => {
+                let showRoom = true;
+                
+                if (typeFilter && room.dataset.type !== typeFilter) {
+                    showRoom = false;
+                }
+                
+                if (priceFilter) {
+                    const price = parseFloat(room.dataset.price);
+                    const [min, max] = priceFilter.split('-').map(p => parseFloat(p) || Infinity);
+                    if (price < min || price > max) {
+                        showRoom = false;
+                    }
+                }
+                
+                room.style.display = showRoom ? 'block' : 'none';
+            });
+        }
+
+        // ========================================
+        // EVENT LISTENERS
+        // ========================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize filters
+            initializeFilters();
+        });
+    </script>
+
+</body>
+</html>

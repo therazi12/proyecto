@@ -1,0 +1,389 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Editar Servicio Extra - Hotel Paraíso Real{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .preview-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        margin-top: 1rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .character-counter {
+        text-align: right;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .character-counter.warning {
+        color: #fd7e14;
+    }
+    
+    .character-counter.danger {
+        color: #dc3545;
+    }
+    
+    .price-display {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    
+    .icon-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 10px;
+        margin: 1rem 0;
+    }
+    
+    .icon-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .icon-option:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .icon-option.selected {
+        border-color: #007bff;
+        background-color: #e3f2fd;
+    }
+    
+    .icon-option i {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .icon-option span {
+        font-size: 0.75rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-edit me-2"></i>Editar Servicio Extra
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+            <li class="breadcrumb-item"><a href="{{ url_for('main.listar_servicios_extra') }}">Servicios Extra</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Modificar Servicio Extra</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="servicioForm">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="nombre" class="form-label">
+                                <i class="fas fa-tag me-1"></i>Nombre del Servicio
+                            </label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" 
+                                   value="{{ servicio.nombre }}" placeholder="Ej: Spa, Lavandería, Room Service..." required>
+                            <div class="invalid-feedback">
+                                El nombre es obligatorio y debe tener al menos 3 caracteres.
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="precio" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>Precio
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="precio" name="precio" 
+                                       value="{{ servicio.precio }}" step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                            <div class="invalid-feedback">
+                                El precio debe ser mayor a 0.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-icons me-1"></i>Icono del Servicio
+                        </label>
+                        <div class="icon-selector">
+                            <div class="icon-option" data-icon="fa-spa">
+                                <i class="fas fa-spa"></i>
+                                <span>Spa</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-utensils">
+                                <i class="fas fa-utensils"></i>
+                                <span>Comida</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-tshirt">
+                                <i class="fas fa-tshirt"></i>
+                                <span>Lavandería</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-car">
+                                <i class="fas fa-car"></i>
+                                <span>Transporte</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-swimming-pool">
+                                <i class="fas fa-swimming-pool"></i>
+                                <span>Piscina</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-dumbbell">
+                                <i class="fas fa-dumbbell"></i>
+                                <span>Gimnasio</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-wifi">
+                                <i class="fas fa-wifi"></i>
+                                <span>WiFi</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-concierge-bell">
+                                <i class="fas fa-concierge-bell"></i>
+                                <span>Concierge</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="icono" name="icono" value="{{ servicio.icono if servicio.icono else 'fa-concierge-bell' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">
+                            <i class="fas fa-file-text me-1"></i>Descripción del Servicio
+                        </label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="4" 
+                                  maxlength="250" placeholder="Describe las características y beneficios de este servicio...">{{ servicio.descripcion }}</textarea>
+                        <div class="character-counter" id="charCounter">{{ servicio.descripcion|length if servicio.descripcion else 0 }}/250 caracteres</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Actualizar Servicio
+                        </button>
+                        <a href="{{ url_for('main.listar_servicios_extra') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Vista Previa -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-gradient-info text-white">
+                <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Vista Previa</h6>
+            </div>
+            <div class="card-body">
+                <div class="preview-card" id="previewCard">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas {{ servicio.icono if servicio.icono else 'fa-concierge-bell' }} fa-2x me-3" id="previewIcon"></i>
+                            <div>
+                                <h5 class="mb-0" id="previewNombre">{{ servicio.nombre }}</h5>
+                                <small class="opacity-75">Servicio adicional</small>
+                            </div>
+                        </div>
+                        <div class="price-display" id="previewPrecio">${{ "%.2f"|format(servicio.precio) }}</div>
+                    </div>
+                    <p class="mb-0" id="previewDescripcion">{{ servicio.descripcion if servicio.descripcion else 'Sin descripción disponible' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas de Uso -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-gradient-warning text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Estadísticas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-0">0</h4>
+                            <small class="text-muted">Contrataciones</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success mb-0">${{ "%.0f"|format(servicio.precio * 0) }}</h4>
+                        <small class="text-muted">Ingresos</small>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">Último mes</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categorías Populares -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient-success text-white">
+                <h6 class="mb-0"><i class="fas fa-star me-2"></i>Servicios Populares</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="small">Room Service</span>
+                    <span class="badge bg-primary">85%</span>
+                </div>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="small">Lavandería</span>
+                    <span class="badge bg-primary">72%</span>
+                </div>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="small">Spa</span>
+                    <span class="badge bg-primary">68%</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="small">Transporte</span>
+                    <span class="badge bg-primary">54%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nombre = document.getElementById('nombre');
+    const descripcion = document.getElementById('descripcion');
+    const precio = document.getElementById('precio');
+    const icono = document.getElementById('icono');
+    const charCounter = document.getElementById('charCounter');
+    const previewNombre = document.getElementById('previewNombre');
+    const previewDescripcion = document.getElementById('previewDescripcion');
+    const previewPrecio = document.getElementById('previewPrecio');
+    const previewIcon = document.getElementById('previewIcon');
+    const iconOptions = document.querySelectorAll('.icon-option');
+
+    // Actualizar contador de caracteres
+    function updateCharCounter() {
+        const length = descripcion.value.length;
+        charCounter.textContent = `${length}/250 caracteres`;
+        
+        if (length > 225) {
+            charCounter.className = 'character-counter danger';
+        } else if (length > 200) {
+            charCounter.className = 'character-counter warning';
+        } else {
+            charCounter.className = 'character-counter';
+        }
+    }
+
+    // Actualizar vista previa
+    function updatePreview() {
+        previewNombre.textContent = nombre.value || 'Nombre del Servicio';
+        previewDescripcion.textContent = descripcion.value || 'Sin descripción disponible';
+        
+        const precioValue = parseFloat(precio.value) || 0;
+        previewPrecio.textContent = `$${precioValue.toFixed(2)}`;
+    }
+
+    // Formatear precio automáticamente
+    function formatPrecio() {
+        const value = parseFloat(precio.value);
+        if (!isNaN(value)) {
+            precio.value = value.toFixed(2);
+        }
+    }
+
+    // Inicializar icono seleccionado
+    function initSelectedIcon() {
+        const currentIcon = icono.value;
+        iconOptions.forEach(option => {
+            if (option.getAttribute('data-icon') === currentIcon) {
+                option.classList.add('selected');
+            }
+        });
+    }
+
+    // Manejar selección de iconos
+    iconOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            iconOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const selectedIcon = this.getAttribute('data-icon');
+            icono.value = selectedIcon;
+            previewIcon.className = `fas ${selectedIcon} fa-2x me-3`;
+        });
+    });
+
+    // Event listeners
+    nombre.addEventListener('input', updatePreview);
+    descripcion.addEventListener('input', function() {
+        updateCharCounter();
+        updatePreview();
+    });
+    precio.addEventListener('input', updatePreview);
+    precio.addEventListener('blur', formatPrecio);
+
+    // Inicializar
+    updateCharCounter();
+    updatePreview();
+    initSelectedIcon();
+
+    // Validación del formulario
+    document.getElementById('servicioForm').addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validar nombre
+        if (nombre.value.trim().length < 3) {
+            nombre.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            nombre.classList.remove('is-invalid');
+        }
+        
+        // Validar precio
+        const precioValue = parseFloat(precio.value);
+        if (isNaN(precioValue) || precioValue <= 0) {
+            precio.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            precio.classList.remove('is-invalid');
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+
+    // Remover validación en tiempo real
+    nombre.addEventListener('input', function() {
+        if (this.value.trim().length >= 3) {
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    precio.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        if (!isNaN(value) && value > 0) {
+            this.classList.remove('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

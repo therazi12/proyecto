@@ -1,0 +1,307 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Tipos de Habitación - Hotel Paraíso Real{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-bed me-2"></i>Gestión de Tipos de Habitación
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">Tipos de Habitación</li>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas Mini -->
+<div class="stats-mini">
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ tipos|length }}</div>
+        <div class="stat-mini-label">Total Tipos</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">
+            {% set total_habitaciones = tipos|map(attribute='habitaciones')|map('length')|sum %}
+            {{ total_habitaciones }}
+        </div>
+        <div class="stat-mini-label">Habitaciones</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">
+            {% set con_habitaciones = tipos|selectattr('habitaciones')|list|length %}
+            {{ con_habitaciones }}
+        </div>
+        <div class="stat-mini-label">En Uso</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">
+            {% set sin_habitaciones = tipos|rejectattr('habitaciones')|list|length %}
+            {{ sin_habitaciones }}
+        </div>
+        <div class="stat-mini-label">Sin Asignar</div>
+    </div>
+</div>
+
+<!-- Acciones Principales -->
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-list me-2 text-primary"></i>
+            Lista de Tipos de Habitación
+        </h3>
+        <a href="{{ url_for('main.nuevo_tipo_habitacion') }}" class="btn btn-crud-primary">
+            <i class="fas fa-plus me-2"></i>Nuevo Tipo
+        </a>
+    </div>
+
+    {% if tipos %}
+    <div class="table-responsive">
+        <table class="table crud-table mb-0">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                    <th><i class="fas fa-tag me-1"></i>Nombre</th>
+                    <th><i class="fas fa-align-left me-1"></i>Descripción</th>
+                    <th><i class="fas fa-bed me-1"></i>Habitaciones</th>
+                    <th><i class="fas fa-chart-bar me-1"></i>Ocupación</th>
+                    <th><i class="fas fa-info-circle me-1"></i>Estado</th>
+                    <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tipos %}
+                {% set habitaciones_count = t.habitaciones|length if t.habitaciones else 0 %}
+                {% set reservas_count = t.habitaciones|map(attribute='reservas')|map('length')|sum if t.habitaciones else 0 %}
+                {% set ocupacion = (reservas_count / habitaciones_count * 100) if habitaciones_count > 0 else 0 %}
+                <tr>
+                    <td><strong>#{{ t.id }}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas {{ t.icono if t.icono else 'fa-bed' }} text-primary me-2 fa-lg"></i>
+                            <div>
+                                <strong>{{ t.nombre }}</strong>
+                                <br><small class="text-muted">{{ t.nombre|length }} caracteres</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if t.descripcion %}
+                            <div title="{{ t.descripcion }}">
+                                {{ t.descripcion[:60] + '...' if t.descripcion|length > 60 else t.descripcion }}
+                            </div>
+                            {% if t.descripcion|length > 60 %}
+                                <small class="text-muted">Ver completa...</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted fst-italic">Sin descripción</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="text-center">
+                            <span class="badge bg-primary fs-6 px-3 py-2">{{ habitaciones_count }}</span>
+                            {% if habitaciones_count > 0 %}
+                                <br><small class="text-muted">habitaciones asignadas</small>
+                            {% else %}
+                                <br><small class="text-warning">sin habitaciones</small>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-center">
+                            {% if habitaciones_count > 0 %}
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ ocupacion }}%" aria-valuenow="{{ ocupacion }}" 
+                                         aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small>{{ "%.1f"|format(ocupacion) }}% ocupado</small>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if habitaciones_count > 0 %}
+                            <span class="badge badge-status badge-available">
+                                <i class="fas fa-check-circle me-1"></i>En Uso
+                            </span>
+                        {% else %}
+                            <span class="badge badge-status" style="background: linear-gradient(135deg, #6c757d, #495057); color: white;">
+                                <i class="fas fa-pause-circle me-1"></i>Sin Usar
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('main.editar_tipo_habitacion', id=t.id) }}" 
+                               class="btn btn-crud-warning" 
+                               title="Editar tipo">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if habitaciones_count == 0 %}
+                                <form action="{{ url_for('main.eliminar_tipo_habitacion', id=t.id) }}" 
+                                      method="post" 
+                                      style="display:inline;"
+                                      onsubmit="return confirm('¿Está seguro de que desea eliminar el tipo {{ t.nombre }}? Esta acción no se puede deshacer.')">
+                                    <button type="submit" 
+                                            class="btn btn-crud-danger" 
+                                            title="Eliminar tipo">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button class="btn btn-crud-danger" 
+                                        disabled 
+                                        title="No se puede eliminar - tiene habitaciones asignadas">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-bed text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+        <h4 class="text-muted mt-3">No hay tipos de habitación registrados</h4>
+        <p class="text-muted">Comience creando diferentes categorías para organizar sus habitaciones.</p>
+        <a href="{{ url_for('main.nuevo_tipo_habitacion') }}" class="btn btn-crud-primary mt-3">
+            <i class="fas fa-plus me-2"></i>Crear Primer Tipo
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Información Adicional -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-chart-pie me-2 text-info"></i>
+        Distribución de Tipos
+    </h5>
+    <div class="row">
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Total tipos:</strong> 
+                <span class="text-primary">{{ tipos|length }}</span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Habitaciones totales:</strong> 
+                <span class="text-success">
+                    {% set total_habitaciones = tipos|map(attribute='habitaciones')|map('length')|sum %}
+                    {{ total_habitaciones }}
+                </span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Tipos en uso:</strong> 
+                <span class="text-info">
+                    {% set con_habitaciones = tipos|selectattr('habitaciones')|list|length %}
+                    {{ con_habitaciones }}
+                </span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Promedio hab./tipo:</strong> 
+                <span class="text-warning">
+                    {% set promedio = (total_habitaciones / tipos|length) if tipos|length > 0 else 0 %}
+                    {{ "%.1f"|format(promedio) }}
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Tipos Más Populares -->
+{% if tipos %}
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-trophy me-2 text-warning"></i>
+        Tipos Más Utilizados
+    </h5>
+    <div class="row">
+        {% for t in tipos|selectattr('habitaciones')|sort(attribute='habitaciones', reverse=true)[:3] %}
+        {% set habitaciones_count = t.habitaciones|length %}
+        <div class="col-md-4 mb-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas {{ t.icono if t.icono else 'fa-bed' }} text-primary me-2 fa-lg"></i>
+                            <h6 class="card-title mb-0">{{ t.nombre[:20] + '...' if t.nombre|length > 20 else t.nombre }}</h6>
+                        </div>
+                        <span class="badge bg-primary">{{ habitaciones_count }} hab.</span>
+                    </div>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            {{ t.descripcion[:50] + '...' if t.descripcion and t.descripcion|length > 50 else (t.descripcion or 'Sin descripción') }}
+                        </small>
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-success">
+                            {% set reservas = t.habitaciones|map(attribute='reservas')|map('length')|sum %}
+                            {{ reservas }} reservas
+                        </small>
+                        <a href="{{ url_for('main.editar_tipo_habitacion', id=t.id) }}" class="btn btn-sm btn-outline-primary">
+                            Ver detalles
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Consejos y Recomendaciones -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-lightbulb me-2 text-success"></i>
+        Recomendaciones
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Cree tipos específicos para diferentes segmentos de clientes
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Use descripciones claras y atractivas
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Organice los tipos por nivel de lujo o precio
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-2">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    Los iconos ayudan a identificar rápidamente cada tipo
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    No puede eliminar tipos con habitaciones asignadas
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    Monitoree la ocupación por tipo para optimizar precios
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

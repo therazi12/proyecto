@@ -1,0 +1,311 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Editar Tipo de Habitación - Hotel Paraíso Real{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .preview-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        margin-top: 1rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        min-height: 120px;
+    }
+    
+    .character-counter {
+        text-align: right;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .character-counter.warning {
+        color: #fd7e14;
+    }
+    
+    .character-counter.danger {
+        color: #dc3545;
+    }
+    
+    .icon-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 10px;
+        margin: 1rem 0;
+    }
+    
+    .icon-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .icon-option:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .icon-option.selected {
+        border-color: #007bff;
+        background-color: #e3f2fd;
+    }
+    
+    .icon-option i {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .icon-option span {
+        font-size: 0.75rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-edit me-2"></i>Editar Tipo de Habitación
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+            <li class="breadcrumb-item"><a href="{{ url_for('main.listar_tipos_habitacion') }}">Tipos de Habitación</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Modificar Tipo de Habitación</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="tipoForm">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">
+                            <i class="fas fa-tag me-1"></i>Nombre del Tipo
+                        </label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" 
+                               value="{{ tipo.nombre }}" placeholder="Ej: Suite Presidencial, Habitación Estándar..." required>
+                        <div class="invalid-feedback">
+                            El nombre es obligatorio y debe tener al menos 3 caracteres.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-icons me-1"></i>Icono Representativo
+                        </label>
+                        <div class="icon-selector">
+                            <div class="icon-option" data-icon="fa-bed">
+                                <i class="fas fa-bed"></i>
+                                <span>Cama</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-crown">
+                                <i class="fas fa-crown"></i>
+                                <span>Premium</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-star">
+                                <i class="fas fa-star"></i>
+                                <span>Estándar</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-gem">
+                                <i class="fas fa-gem"></i>
+                                <span>Lujo</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-home">
+                                <i class="fas fa-home"></i>
+                                <span>Familiar</span>
+                            </div>
+                            <div class="icon-option" data-icon="fa-heart">
+                                <i class="fas fa-heart"></i>
+                                <span>Romántica</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="icono" name="icono" value="{{ tipo.icono if tipo.icono else 'fa-bed' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">
+                            <i class="fas fa-file-text me-1"></i>Descripción
+                        </label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="4" 
+                                  maxlength="300" placeholder="Describe las características y amenidades de este tipo de habitación...">{{ tipo.descripcion }}</textarea>
+                        <div class="character-counter" id="charCounter">{{ tipo.descripcion|length if tipo.descripcion else 0 }}/300 caracteres</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Actualizar Tipo
+                        </button>
+                        <a href="{{ url_for('main.listar_tipos_habitacion') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Vista Previa -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-gradient-info text-white">
+                <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Vista Previa</h6>
+            </div>
+            <div class="card-body">
+                <div class="preview-card" id="previewCard">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas {{ tipo.icono if tipo.icono else 'fa-bed' }} fa-2x me-3" id="previewIcon"></i>
+                        <div>
+                            <h5 class="mb-0" id="previewNombre">{{ tipo.nombre }}</h5>
+                            <small class="opacity-75">Tipo de habitación</small>
+                        </div>
+                    </div>
+                    <p class="mb-0" id="previewDescripcion">{{ tipo.descripcion if tipo.descripcion else 'Sin descripción' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas de Uso -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-gradient-warning text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Estadísticas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-0">{{ tipo.habitaciones|length if tipo.habitaciones else 0 }}</h4>
+                            <small class="text-muted">Habitaciones</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success mb-0">{{ ((tipo.habitaciones|selectattr('reservas')|list|length / tipo.habitaciones|length * 100)|round(1)) if tipo.habitaciones and tipo.habitaciones|length > 0 else 0 }}%</h4>
+                        <small class="text-muted">Ocupación</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consejos -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient-success text-white">
+                <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Consejos</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Usa nombres descriptivos y atractivos</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Destaca las amenidades principales</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>El icono ayuda a identificar el tipo</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Máximo 300 caracteres en descripción</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nombre = document.getElementById('nombre');
+    const descripcion = document.getElementById('descripcion');
+    const icono = document.getElementById('icono');
+    const charCounter = document.getElementById('charCounter');
+    const previewNombre = document.getElementById('previewNombre');
+    const previewDescripcion = document.getElementById('previewDescripcion');
+    const previewIcon = document.getElementById('previewIcon');
+    const iconOptions = document.querySelectorAll('.icon-option');
+
+    // Actualizar contador de caracteres
+    function updateCharCounter() {
+        const length = descripcion.value.length;
+        charCounter.textContent = `${length}/300 caracteres`;
+        
+        if (length > 270) {
+            charCounter.className = 'character-counter danger';
+        } else if (length > 240) {
+            charCounter.className = 'character-counter warning';
+        } else {
+            charCounter.className = 'character-counter';
+        }
+    }
+
+    // Actualizar vista previa
+    function updatePreview() {
+        previewNombre.textContent = nombre.value || 'Nuevo Tipo';
+        previewDescripcion.textContent = descripcion.value || 'Sin descripción';
+    }
+
+    // Inicializar icono seleccionado
+    function initSelectedIcon() {
+        const currentIcon = icono.value;
+        iconOptions.forEach(option => {
+            if (option.getAttribute('data-icon') === currentIcon) {
+                option.classList.add('selected');
+            }
+        });
+    }
+
+    // Manejar selección de iconos
+    iconOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            iconOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const selectedIcon = this.getAttribute('data-icon');
+            icono.value = selectedIcon;
+            previewIcon.className = `fas ${selectedIcon} fa-2x me-3`;
+        });
+    });
+
+    // Event listeners
+    nombre.addEventListener('input', updatePreview);
+    descripcion.addEventListener('input', function() {
+        updateCharCounter();
+        updatePreview();
+    });
+
+    // Inicializar
+    updateCharCounter();
+    updatePreview();
+    initSelectedIcon();
+
+    // Validación del formulario
+    document.getElementById('tipoForm').addEventListener('submit', function(e) {
+        const nombreVal = nombre.value.trim();
+        
+        if (nombreVal.length < 3) {
+            e.preventDefault();
+            nombre.classList.add('is-invalid');
+            nombre.focus();
+            return;
+        } else {
+            nombre.classList.remove('is-invalid');
+        }
+    });
+
+    // Remover validación en tiempo real
+    nombre.addEventListener('input', function() {
+        if (this.value.trim().length >= 3) {
+            this.classList.remove('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

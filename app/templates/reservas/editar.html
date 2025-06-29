@@ -1,0 +1,446 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Editar Reserva - Hotel Paraíso Real{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .preview-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        margin-top: 1rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .servicio-checkbox {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .servicio-checkbox:hover {
+        background-color: #f8f9fa;
+        border-color: #007bff;
+    }
+    
+    .servicio-checkbox.selected {
+        background-color: #e3f2fd;
+        border-color: #007bff;
+    }
+    
+    .estado-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .estado-pendiente {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .estado-confirmada {
+        background-color: #d1edff;
+        color: #0c5460;
+    }
+    
+    .estado-cancelada {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .date-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .total-cost {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-edit me-2"></i>Editar Reserva
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+            <li class="breadcrumb-item"><a href="{{ url_for('main.listar_reservas') }}">Reservas</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Modificar Reserva</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="reservaForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="usuario_id" class="form-label">
+                                <i class="fas fa-user me-1"></i>Cliente
+                            </label>
+                            <select class="form-select" id="usuario_id" name="usuario_id" required>
+                                <option value="">Seleccionar cliente...</option>
+                                {% for u in usuarios %}
+                                    <option value="{{ u.id }}" {% if reserva.usuario_id == u.id %}selected{% endif %}>
+                                        {{ u.nombre }} - {{ u.email }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="habitacion_id" class="form-label">
+                                <i class="fas fa-bed me-1"></i>Habitación
+                            </label>
+                            <select class="form-select" id="habitacion_id" name="habitacion_id" required>
+                                <option value="">Seleccionar habitación...</option>
+                                {% for h in habitaciones %}
+                                    <option value="{{ h.id }}" 
+                                            data-precio="{{ h.tipo_habitacion.precio if h.tipo_habitacion else 0 }}"
+                                            {% if reserva.habitacion_id == h.id %}selected{% endif %}>
+                                        Habitación {{ h.numero }} - {{ h.tipo_habitacion.nombre if h.tipo_habitacion else 'Sin tipo' }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="fecha_inicio" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>Fecha Inicio
+                            </label>
+                            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" 
+                                   value="{{ reserva.fecha_inicio.strftime('%Y-%m-%d') if reserva.fecha_inicio else '' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="fecha_fin" class="form-label">
+                                <i class="fas fa-calendar-check me-1"></i>Fecha Fin
+                            </label>
+                            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" 
+                                   value="{{ reserva.fecha_fin.strftime('%Y-%m-%d') if reserva.fecha_fin else '' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="estado" class="form-label">
+                                <i class="fas fa-flag me-1"></i>Estado
+                            </label>
+                            <select class="form-select" id="estado" name="estado">
+                                <option value="pendiente" {% if reserva.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="confirmada" {% if reserva.estado == 'confirmada' %}selected{% endif %}>Confirmada</option>
+                                <option value="cancelada" {% if reserva.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="date-info" id="dateInfo" style="display: none;">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <strong>Noches</strong>
+                                <div id="totalNoches">0</div>
+                            </div>
+                            <div class="col-4">
+                                <strong>Check-in</strong>
+                                <div id="checkInDay">-</div>
+                            </div>
+                            <div class="col-4">
+                                <strong>Check-out</strong>
+                                <div id="checkOutDay">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-concierge-bell me-1"></i>Servicios Extra
+                        </label>
+                        <div class="row">
+                            {% for s in servicios %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="servicio-checkbox {% if s in reserva.servicios %}selected{% endif %}">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="servicios" value="{{ s.id }}" id="servicio_{{ s.id }}"
+                                                   data-precio="{{ s.precio }}"
+                                                   {% if s in reserva.servicios %}checked{% endif %}>
+                                            <label class="form-check-label w-100" for="servicio_{{ s.id }}">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>{{ s.nombre }}</strong>
+                                                        <div class="text-muted small">{{ s.descripcion[:50] }}...</div>
+                                                    </div>
+                                                    <span class="badge bg-success">${{ "%.2f"|format(s.precio) }}</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Actualizar Reserva
+                        </button>
+                        <a href="{{ url_for('main.listar_reservas') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Vista Previa -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-gradient-info text-white">
+                <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Resumen de Reserva</h6>
+            </div>
+            <div class="card-body">
+                <div class="preview-card" id="previewCard">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <h6 class="mb-0" id="previewCliente">{{ reserva.usuario.nombre if reserva.usuario else 'Cliente' }}</h6>
+                            <small class="opacity-75">Reserva #{{ reserva.id }}</small>
+                        </div>
+                        <span class="badge estado-badge estado-{{ reserva.estado }}" id="previewEstado">{{ reserva.estado|title }}</span>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <strong>Habitación:</strong> <span id="previewHabitacion">{{ reserva.habitacion.numero if reserva.habitacion else '--' }}</span>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <strong>Fechas:</strong>
+                        <div id="previewFechas">{{ reserva.fecha_inicio.strftime('%d/%m/%Y') if reserva.fecha_inicio else '--' }} - {{ reserva.fecha_fin.strftime('%d/%m/%Y') if reserva.fecha_fin else '--' }}</div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <strong>Servicios Extra:</strong>
+                        <div id="previewServicios">
+                            {% if reserva.servicios %}
+                                {% for s in reserva.servicios %}
+                                    <span class="badge bg-light text-dark me-1">{{ s.nombre }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">Ninguno</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="border-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>Total:</strong>
+                        <span class="total-cost" id="previewTotal">${{ "%.2f"|format(reserva.total if reserva.total else 0) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información Adicional -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient-warning text-white">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><i class="fas fa-clock text-primary me-2"></i>Check-in: 15:00 hrs</li>
+                    <li class="mb-2"><i class="fas fa-clock text-danger me-2"></i>Check-out: 12:00 hrs</li>
+                    <li class="mb-2"><i class="fas fa-credit-card text-success me-2"></i>Los precios incluyen impuestos</li>
+                    <li><i class="fas fa-ban text-warning me-2"></i>Cancelación gratuita 24h antes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
+    const habitacionSelect = document.getElementById('habitacion_id');
+    const usuarioSelect = document.getElementById('usuario_id');
+    const estadoSelect = document.getElementById('estado');
+    const serviciosCheckboxes = document.querySelectorAll('input[name="servicios"]');
+    
+    const previewCliente = document.getElementById('previewCliente');
+    const previewHabitacion = document.getElementById('previewHabitacion');
+    const previewFechas = document.getElementById('previewFechas');
+    const previewServicios = document.getElementById('previewServicios');
+    const previewEstado = document.getElementById('previewEstado');
+    const previewTotal = document.getElementById('previewTotal');
+    
+    const dateInfo = document.getElementById('dateInfo');
+    const totalNoches = document.getElementById('totalNoches');
+    const checkInDay = document.getElementById('checkInDay');
+    const checkOutDay = document.getElementById('checkOutDay');
+
+    // Actualizar información de fechas
+    function updateDateInfo() {
+        const inicio = new Date(fechaInicio.value);
+        const fin = new Date(fechaFin.value);
+        
+        if (fechaInicio.value && fechaFin.value) {
+            const diffTime = Math.abs(fin - inicio);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            totalNoches.textContent = diffDays;
+            checkInDay.textContent = inicio.toLocaleDateString('es-ES', { weekday: 'short' });
+            checkOutDay.textContent = fin.toLocaleDateString('es-ES', { weekday: 'short' });
+            
+            previewFechas.textContent = `${inicio.toLocaleDateString('es-ES')} - ${fin.toLocaleDateString('es-ES')}`;
+            dateInfo.style.display = 'block';
+        } else {
+            dateInfo.style.display = 'none';
+            previewFechas.textContent = '-- - --';
+        }
+        
+        calculateTotal();
+    }
+
+    // Calcular total
+    function calculateTotal() {
+        let total = 0;
+        
+        // Precio base de habitación
+        const selectedHabitacion = habitacionSelect.options[habitacionSelect.selectedIndex];
+        if (selectedHabitacion && selectedHabitacion.dataset.precio) {
+            const precioHabitacion = parseFloat(selectedHabitacion.dataset.precio);
+            const noches = parseInt(totalNoches.textContent) || 1;
+            total += precioHabitacion * noches;
+        }
+        
+        // Servicios extra
+        serviciosCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                total += parseFloat(checkbox.dataset.precio) || 0;
+            }
+        });
+        
+        previewTotal.textContent = `$${total.toFixed(2)}`;
+    }
+
+    // Actualizar vista previa del cliente
+    function updateClientePreview() {
+        const selectedOption = usuarioSelect.options[usuarioSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            previewCliente.textContent = selectedOption.textContent.split(' - ')[0];
+        } else {
+            previewCliente.textContent = 'Cliente';
+        }
+    }
+
+    // Actualizar vista previa de habitación
+    function updateHabitacionPreview() {
+        const selectedOption = habitacionSelect.options[habitacionSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            previewHabitacion.textContent = selectedOption.textContent;
+        } else {
+            previewHabitacion.textContent = '--';
+        }
+        calculateTotal();
+    }
+
+    // Actualizar vista previa de estado
+    function updateEstadoPreview() {
+        const estado = estadoSelect.value;
+        previewEstado.textContent = estado.charAt(0).toUpperCase() + estado.slice(1);
+        previewEstado.className = `badge estado-badge estado-${estado}`;
+    }
+
+    // Actualizar vista previa de servicios
+    function updateServiciosPreview() {
+        const selectedServicios = [];
+        serviciosCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const label = checkbox.closest('.servicio-checkbox').querySelector('strong').textContent;
+                selectedServicios.push(label);
+            }
+        });
+        
+        if (selectedServicios.length > 0) {
+            previewServicios.innerHTML = selectedServicios.map(s => 
+                `<span class="badge bg-light text-dark me-1">${s}</span>`
+            ).join('');
+        } else {
+            previewServicios.innerHTML = '<span class="text-muted">Ninguno</span>';
+        }
+        
+        calculateTotal();
+    }
+
+    // Manejar checkboxes de servicios
+    serviciosCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const servicioDiv = this.closest('.servicio-checkbox');
+            if (this.checked) {
+                servicioDiv.classList.add('selected');
+            } else {
+                servicioDiv.classList.remove('selected');
+            }
+            updateServiciosPreview();
+        });
+    });
+
+    // Event listeners
+    fechaInicio.addEventListener('change', updateDateInfo);
+    fechaFin.addEventListener('change', updateDateInfo);
+    habitacionSelect.addEventListener('change', updateHabitacionPreview);
+    usuarioSelect.addEventListener('change', updateClientePreview);
+    estadoSelect.addEventListener('change', updateEstadoPreview);
+
+    // Validación de fechas
+    fechaInicio.addEventListener('change', function() {
+        if (this.value) {
+            fechaFin.min = this.value;
+        }
+    });
+
+    // Inicializar
+    updateDateInfo();
+    updateClientePreview();
+    updateHabitacionPreview();
+    updateEstadoPreview();
+    updateServiciosPreview();
+
+    // Validación del formulario
+    document.getElementById('reservaForm').addEventListener('submit', function(e) {
+        const inicio = new Date(fechaInicio.value);
+        const fin = new Date(fechaFin.value);
+        
+        if (inicio >= fin) {
+            e.preventDefault();
+            alert('La fecha de fin debe ser posterior a la fecha de inicio.');
+            fechaFin.focus();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

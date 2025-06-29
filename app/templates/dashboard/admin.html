@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard {% if usuario.rol == 'admin' %}Admin{% else %}Empleado{% endif %} - Hotel Paraíso Real</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
+    <style>
+        .admin-dashboard-body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .admin-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .admin-hero {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.9));
+            color: white;
+            padding: 3rem 0 2rem;
+        }
+        
+        .admin-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-hero .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: -2rem 0 3rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .stat-icon.rooms { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .stat-icon.bookings { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .stat-icon.users { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .stat-icon.revenue { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .stat-icon.services { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .stat-icon.promotions { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .stat-change {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .stat-change.positive {
+            background: rgba(72, 187, 120, 0.1);
+            color: #48bb78;
+        }
+        
+        .stat-change.warning {
+            background: rgba(237, 137, 54, 0.1);
+            color: #ed8936;
+        }
+        
+        .quick-actions {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+        
+        .action-btn i {
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+        
+        .action-btn.rooms { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .action-btn.bookings { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .action-btn.users { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .action-btn.services { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .action-btn.promotions { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .action-btn.opinions { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        
+        .recent-activity {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .activity-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .activity-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: white;
+        }
+        
+        .activity-icon.pending { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .activity-icon.confirmed { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        
+        .activity-content h6 {
+            margin: 0;
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .activity-content small {
+            color: #718096;
+        }
+        
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+        }
+        
+        .badge-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-status.pending {
+            background: rgba(237, 137, 54, 0.1);
+            color: #ed8936;
+        }
+        
+        .badge-status.confirmed {
+            background: rgba(72, 187, 120, 0.1);
+            color: #48bb78;
+        }
+        
+        .user-dropdown {
+            position: relative;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="admin-dashboard-body">
+    <!-- Navbar -->
+    <nav class="admin-navbar">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-crown text-primary" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 text-dark">Hotel Paraíso Real</h5>
+                        <small class="text-muted">Panel de {% if usuario.rol == 'admin' %}Administración{% else %}Empleado{% endif %}</small>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-dropdown dropdown">
+                        <div class="user-avatar" data-bs-toggle="dropdown">
+                            {{ usuario.nombre[0].upper() }}
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li class="dropdown-header">
+                                <strong>{{ usuario.nombre }}</strong><br>
+                                <small class="text-muted">{{ usuario.rol.title() }}</small>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('main.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="admin-hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1>¡Bienvenido {{ usuario.nombre.split()[0] }}!</h1>
+                    <p class="subtitle">Panel de {% if usuario.rol == 'admin' %}control y gestión{% else %}operaciones diarias{% endif %} del Hotel Paraíso Real</p>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="d-flex align-items-center justify-content-end gap-3">
+                        <div class="text-end">
+                            <div class="fw-bold">{{ "Hoy" }}</div>
+                            <small>{{ moment().format('DD/MM/YYYY') if moment else '' }}</small>
+                        </div>
+                        <div class="position-relative">
+                            <i class="fas fa-bell fa-2x"></i>
+                            {% if stats.reservas_pendientes > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ stats.reservas_pendientes }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Grid -->
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon rooms">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <span class="stat-change positive">{{ stats.habitaciones_disponibles }}/{{ stats.total_habitaciones }} disponibles</span>
+                </div>
+                <div class="stat-number">{{ stats.total_habitaciones }}</div>
+                <div class="stat-label">Total Habitaciones</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon bookings">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    {% if stats.reservas_pendientes > 0 %}
+                    <span class="stat-change warning">{{ stats.reservas_pendientes }} pendientes</span>
+                    {% else %}
+                    <span class="stat-change positive">Al día</span>
+                    {% endif %}
+                </div>
+                <div class="stat-number">{{ stats.total_reservas }}</div>
+                <div class="stat-label">Total Reservas</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon users">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <span class="stat-change positive">Activos</span>
+                </div>
+                <div class="stat-number">{{ stats.total_usuarios }}</div>
+                <div class="stat-label">Clientes Registrados</div>
+            </div>
+
+            {% if usuario.rol == 'admin' %}
+            <!-- Solo admin puede ver información financiera -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon revenue">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <span class="stat-change positive">Estimado</span>
+                </div>
+                <div class="stat-number">${{ "%.0f"|format(stats.ingresos_estimados) }}</div>
+                <div class="stat-label">Ingresos Totales</div>
+            </div>
+            {% endif %}
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon services">
+                        <i class="fas fa-concierge-bell"></i>
+                    </div>
+                    <span class="stat-change positive">Disponibles</span>
+                </div>
+                <div class="stat-number">{{ stats.total_servicios }}</div>
+                <div class="stat-label">Servicios Extra</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon promotions">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <span class="stat-change positive">Activas</span>
+                </div>
+                <div class="stat-number">{{ stats.total_promociones }}</div>
+                <div class="stat-label">Promociones</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3 class="section-title">
+                <i class="fas fa-bolt me-2"></i>
+                {% if usuario.rol == 'admin' %}Acciones Rápidas{% else %}Operaciones Diarias{% endif %}
+            </h3>
+            <div class="action-grid">
+                <!-- Acciones disponibles para ambos roles -->
+                <a href="{{ url_for('main.listar_reservas') }}" class="action-btn bookings">
+                    <i class="fas fa-calendar-alt"></i>
+                    Ver Reservas
+                </a>
+                <a href="{{ url_for('main.listar_habitaciones') }}" class="action-btn rooms">
+                    <i class="fas fa-bed"></i>
+                    Estado Habitaciones
+                </a>
+                <a href="{{ url_for('main.listar_servicios_extra') }}" class="action-btn services">
+                    <i class="fas fa-concierge-bell"></i>
+                    Servicios Extra
+                </a>
+                <a href="{{ url_for('main.listar_opiniones') }}" class="action-btn opinions">
+                    <i class="fas fa-star"></i>
+                    Opiniones
+                </a>
+                
+                {% if usuario.rol == 'admin' %}
+                <!-- Acciones solo para administradores -->
+                <a href="{{ url_for('main.nueva_habitacion') }}" class="action-btn users">
+                    <i class="fas fa-plus"></i>
+                    Nueva Habitación
+                </a>
+                <a href="{{ url_for('main.listar_promociones') }}" class="action-btn promotions">
+                    <i class="fas fa-percentage"></i>
+                    Promociones
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        {% if reservas_recientes %}
+        <div class="recent-activity">
+            <h3 class="section-title">
+                <i class="fas fa-clock me-2"></i>
+                Actividad Reciente
+            </h3>
+            {% for reserva in reservas_recientes %}
+            <div class="activity-item">
+                <div class="activity-icon {{ 'confirmed' if reserva.estado == 'confirmada' else 'pending' }}">
+                    <i class="fas fa-{{ 'check' if reserva.estado == 'confirmada' else 'clock' }}"></i>
+                </div>
+                <div class="activity-content flex-grow-1">
+                    <h6>Reserva #{{ reserva.id }} - Habitación {{ reserva.habitacion.numero }}</h6>
+                    <small>
+                        {{ reserva.usuario.nombre }} • 
+                        {{ reserva.fecha_inicio.strftime('%d/%m') }} - {{ reserva.fecha_fin.strftime('%d/%m/%Y') }}
+                    </small>
+                </div>
+                <span class="badge-status {{ reserva.estado }}">
+                    {{ reserva.estado.title() }}
+                </span>
+            </div>
+            {% endfor %}
+            
+            <div class="text-center mt-3">
+                <a href="{{ url_for('main.listar_reservas') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-right me-2"></i>
+                    Ver Todas las Reservas
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Funcionalidad adicional del dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Actualizar la hora cada minuto
+            setInterval(function() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                // Actualizar elementos de tiempo si existen
+            }, 60000);
+            
+            // Animaciones de entrada
+            const cards = document.querySelectorAll('.stat-card, .quick-actions, .recent-activity');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

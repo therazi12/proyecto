@@ -1,0 +1,341 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Nueva Reserva{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-plus-circle me-2"></i>Nueva Reserva
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item"><a href="{{ url_for('main.listar_reservas') }}">Reservas</a></li>
+    <li class="breadcrumb-item active">Nueva</li>
+{% endblock %}
+
+{% block content %}
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-calendar-check me-2 text-primary"></i>
+            Información de la Reserva
+        </h3>
+        <a href="{{ url_for('main.listar_reservas') }}" class="btn btn-crud-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+        </a>
+    </div>
+
+    <form method="POST" id="reservaForm" class="needs-validation" novalidate>
+        <div class="row">
+            <!-- Columna Izquierda -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="usuario_id" class="form-label">
+                        <i class="fas fa-user me-1 text-primary"></i>
+                        Cliente <span class="text-danger">*</span>
+                    </label>
+                    <select name="usuario_id" id="usuario_id" class="form-select" required>
+                        <option value="">Seleccione un cliente</option>
+                        {% for u in usuarios %}
+                            <option value="{{ u.id }}">{{ u.nombre }} ({{ u.email }})</option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">
+                        Por favor seleccione un cliente.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Cliente que realizará la reserva.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="habitacion_id" class="form-label">
+                        <i class="fas fa-bed me-1 text-primary"></i>
+                        Habitación <span class="text-danger">*</span>
+                    </label>
+                    <select name="habitacion_id" id="habitacion_id" class="form-select" required>
+                        <option value="">Seleccione una habitación</option>
+                        {% for h in habitaciones %}
+                            <option value="{{ h.id }}" data-precio="{{ h.precio }}">
+                                Habitación {{ h.numero }} - {{ h.tipo }} - ${{ "%.2f"|format(h.precio) }}/noche
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">
+                        Por favor seleccione una habitación.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Solo se muestran habitaciones disponibles.
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fecha_inicio" class="form-label">
+                                <i class="fas fa-calendar-plus me-1 text-primary"></i>
+                                Check-in <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" 
+                                   name="fecha_inicio" 
+                                   id="fecha_inicio" 
+                                   class="form-control" 
+                                   required 
+                                   min="{{ today }}">
+                            <div class="invalid-feedback">
+                                Por favor seleccione la fecha de entrada.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fecha_fin" class="form-label">
+                                <i class="fas fa-calendar-minus me-1 text-primary"></i>
+                                Check-out <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" 
+                                   name="fecha_fin" 
+                                   id="fecha_fin" 
+                                   class="form-control" 
+                                   required 
+                                   min="{{ today }}">
+                            <div class="invalid-feedback">
+                                Por favor seleccione la fecha de salida.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="estado" class="form-label">
+                        <i class="fas fa-info-circle me-1 text-primary"></i>
+                        Estado de la Reserva
+                    </label>
+                    <select name="estado" id="estado" class="form-select">
+                        <option value="pendiente">🕐 Pendiente</option>
+                        <option value="confirmada">✅ Confirmada</option>
+                        <option value="cancelada">❌ Cancelada</option>
+                    </select>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Estado inicial de la reserva.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-concierge-bell me-1 text-primary"></i>
+                        Servicios Extra
+                    </label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        {% if servicios %}
+                            {% for s in servicios %}
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" 
+                                           name="servicios" 
+                                           value="{{ s.id }}" 
+                                           id="servicio_{{ s.id }}"
+                                           class="form-check-input" 
+                                           data-precio="{{ s.precio }}">
+                                    <label class="form-check-label d-flex justify-content-between align-items-center" for="servicio_{{ s.id }}">
+                                        <span>{{ s.nombre }}</span>
+                                        <span class="badge bg-success">+${{ "%.2f"|format(s.precio) }}</span>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-info-circle me-1"></i>
+                                No hay servicios extra disponibles.
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Servicios opcionales que se pueden agregar a la reserva.
+                    </div>
+                </div>
+
+                <!-- Resumen de Costos -->
+                <div class="mb-3">
+                    <div class="card bg-light border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-calculator me-1"></i>
+                                Resumen de Costos
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Habitación:</span>
+                                <strong id="costoHabitacion">$0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Servicios extra:</span>
+                                <strong id="costoServicios">$0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Noches:</span>
+                                <strong id="numeroNoches">0</strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span class="h5">Total estimado:</span>
+                                <span class="h5 text-success" id="costoTotal">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+            <a href="{{ url_for('main.listar_reservas') }}" class="btn btn-crud-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-crud-primary">
+                <i class="fas fa-save me-2"></i>Crear Reserva
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Información de Ayuda -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-lightbulb me-2 text-warning"></i>
+        Consejos para Crear Reservas
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Verifique la disponibilidad de fechas
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Confirme los datos del cliente
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Revise el cálculo de costos
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Seleccione servicios según necesidad
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validación de formulario Bootstrap
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Validación de fechas personalizada
+document.getElementById('reservaForm').addEventListener('submit', function(e) {
+    const fechaInicio = new Date(document.querySelector('input[name="fecha_inicio"]').value);
+    const fechaFin = new Date(document.querySelector('input[name="fecha_fin"]').value);
+    
+    if (fechaFin <= fechaInicio) {
+        e.preventDefault();
+        alert('❌ La fecha de check-out debe ser posterior a la fecha de check-in');
+        return false;
+    }
+    
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    if (fechaInicio < hoy) {
+        e.preventDefault();
+        alert('❌ La fecha de check-in no puede ser anterior a hoy');
+        return false;
+    }
+});
+
+// Cálculo automático de costos
+function calcularCosto() {
+    const habitacionSelect = document.querySelector('select[name="habitacion_id"]');
+    const fechaInicio = document.querySelector('input[name="fecha_inicio"]').value;
+    const fechaFin = document.querySelector('input[name="fecha_fin"]').value;
+    const serviciosChecked = document.querySelectorAll('input[name="servicios"]:checked');
+    
+    let costoHabitacion = 0;
+    let costoServicios = 0;
+    let noches = 0;
+    
+    if (habitacionSelect.value && fechaInicio && fechaFin) {
+        const precioNoche = parseFloat(habitacionSelect.options[habitacionSelect.selectedIndex].dataset.precio) || 0;
+        noches = Math.ceil((new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60 * 24));
+        noches = Math.max(noches, 1);
+        costoHabitacion = precioNoche * noches;
+    }
+    
+    serviciosChecked.forEach(servicio => {
+        costoServicios += parseFloat(servicio.dataset.precio) || 0;
+    });
+    
+    document.getElementById('costoHabitacion').textContent = `$${costoHabitacion.toFixed(2)}`;
+    document.getElementById('costoServicios').textContent = `$${costoServicios.toFixed(2)}`;
+    document.getElementById('numeroNoches').textContent = noches.toString();
+    document.getElementById('costoTotal').textContent = `$${(costoHabitacion + costoServicios).toFixed(2)}`;
+}
+
+// Event listeners para cálculo automático
+document.querySelector('select[name="habitacion_id"]').addEventListener('change', calcularCosto);
+document.querySelector('input[name="fecha_inicio"]').addEventListener('change', function() {
+    calcularCosto();
+    // Actualizar fecha mínima de check-out
+    const fechaInicio = this.value;
+    if (fechaInicio) {
+        const fechaCheckOut = document.querySelector('input[name="fecha_fin"]');
+        fechaCheckOut.min = fechaInicio;
+        
+        // Si la fecha de fin es anterior a la nueva fecha de inicio, limpiarla
+        if (fechaCheckOut.value && fechaCheckOut.value <= fechaInicio) {
+            fechaCheckOut.value = '';
+        }
+    }
+});
+document.querySelector('input[name="fecha_fin"]').addEventListener('change', calcularCosto);
+document.querySelectorAll('input[name="servicios"]').forEach(checkbox => {
+    checkbox.addEventListener('change', calcularCosto);
+});
+
+// Inicializar cálculo al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    calcularCosto();
+});
+</script>
+{% endblock %}

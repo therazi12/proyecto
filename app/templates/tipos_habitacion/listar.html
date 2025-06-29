@@ -1,0 +1,138 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Tipos de Habitación{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-home me-2"></i>Gestión de Tipos de Habitación
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">Tipos de Habitación</li>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas Mini -->
+<div class="stats-mini">
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ tipos|length }}</div>
+        <div class="stat-mini-label">Total Tipos</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ tipos|selectattr("descripcion")|list|length }}</div>
+        <div class="stat-mini-label">Con Descripción</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ tipos|rejectattr("descripcion")|list|length }}</div>
+        <div class="stat-mini-label">Sin Descripción</div>
+    </div>
+</div>
+
+<!-- Acciones Principales -->
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-list me-2 text-primary"></i>
+            Lista de Tipos de Habitación
+        </h3>
+        <a href="{{ url_for('main.nuevo_tipo_habitacion') }}" class="btn btn-crud-primary">
+            <i class="fas fa-plus me-2"></i>Nuevo Tipo
+        </a>
+    </div>
+
+    {% if tipos %}
+    <div class="table-responsive">
+        <table class="table crud-table mb-0">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                    <th><i class="fas fa-tag me-1"></i>Nombre</th>
+                    <th><i class="fas fa-align-left me-1"></i>Descripción</th>
+                    <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tipos %}
+                <tr>
+                    <td><strong>#{{ t.id }}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-home text-muted me-2"></i>
+                            <strong>{{ t.nombre }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {{ t.descripcion[:80] + '...' if t.descripcion and t.descripcion|length > 80 else t.descripcion or 'Sin descripción' }}
+                        </small>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('main.editar_tipo_habitacion', id=t.id) }}" 
+                               class="btn btn-crud-warning" 
+                               title="Editar tipo">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('main.eliminar_tipo_habitacion', id=t.id) }}" 
+                                  method="post" 
+                                  style="display:inline;"
+                                  onsubmit="return confirm('¿Está seguro de que desea eliminar el tipo {{ t.nombre }}? Esta acción no se puede deshacer.')">
+                                <button type="submit" 
+                                        class="btn btn-crud-danger" 
+                                        title="Eliminar tipo">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-home text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+        <h4 class="text-muted mt-3">No hay tipos de habitación registrados</h4>
+        <p class="text-muted">Comience creando categorías para organizar sus habitaciones.</p>
+        <a href="{{ url_for('main.nuevo_tipo_habitacion') }}" class="btn btn-crud-primary mt-3">
+            <i class="fas fa-plus me-2"></i>Crear Primer Tipo
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Información Adicional -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-info-circle me-2 text-info"></i>
+        Información de Tipos de Habitación
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <p class="mb-2">
+                <strong>Total de tipos:</strong> 
+                <span class="text-primary">{{ tipos|length }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Con descripción:</strong> 
+                <span class="text-success">{{ tipos|selectattr("descripcion")|list|length }}</span>
+            </p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-2">
+                <strong>Sin descripción:</strong> 
+                <span class="text-warning">{{ tipos|rejectattr("descripcion")|list|length }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Tipos disponibles:</strong> 
+                <span class="text-info">Útil para categorizar habitaciones</span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

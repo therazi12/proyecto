@@ -1,0 +1,1237 @@
+{% extends "base.html" %}
+
+{% block title %}{{ habitacion.numero }} - {{ habitacion.tipo_hab.nombre }}{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="Descubre nuestra {{ habitacion.tipo_hab.nombre }} - Habitación {{ habitacion.numero }}. {{ habitacion.tipo_hab.descripcion }}">
+<meta name="keywords" content="hotel, habitación, {{ habitacion.tipo_hab.nombre }}, reserva, lujo">
+<link rel="stylesheet" href="{{ url_for('static', filename='habitacion-styles.css') }}">
+<style>
+/* Estilos específicos para la página de habitación */
+.habitacion-hero {
+    height: 70vh;
+    background: linear-gradient(135deg, rgba(26, 35, 126, 0.8), rgba(30, 136, 229, 0.8)), 
+                url('{{ habitacion.imagen_url or "/static/images/room-default.jpg" }}') center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.habitacion-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    padding: 0 2rem;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.hero-price {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #ffd700;
+    margin-bottom: 2rem;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-hero {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary-hero {
+    background: linear-gradient(135deg, #1e88e5, #1565c0);
+    color: white;
+}
+
+.btn-primary-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 136, 229, 0.4);
+}
+
+.btn-secondary-hero {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary-hero:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Contenido principal */
+.habitacion-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 1rem;
+}
+
+.section-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #1a237e;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.expand-icon {
+    background: linear-gradient(135deg, #1e88e5, #1565c0);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.section-content {
+    display: block;
+    opacity: 1;
+    max-height: none;
+    transition: all 0.3s ease;
+}
+
+.section-content.collapsed {
+    display: none;
+    opacity: 0;
+    max-height: 0;
+}
+
+/* Galería de imágenes */
+.imagen-gallery {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 200px 200px;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.gallery-main {
+    grid-row: span 2;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.gallery-item {
+    background-size: cover;
+    background-position: center;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.gallery-item:hover {
+    transform: scale(1.05);
+}
+
+.gallery-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+    opacity: 1;
+}
+
+/* Especificaciones */
+.specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.spec-item {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 1.5rem;
+    border-radius: 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.spec-item:hover {
+    transform: translateY(-5px);
+    background: linear-gradient(135deg, #1e88e5, #1565c0);
+    color: white;
+}
+
+.spec-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #1e88e5;
+}
+
+.spec-item:hover .spec-icon {
+    color: white;
+}
+
+.spec-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.spec-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a237e;
+}
+
+.spec-item:hover .spec-value {
+    color: white;
+}
+
+/* Amenidades */
+.amenidades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.amenidad-item {
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    padding: 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.amenidad-item:hover {
+    background: linear-gradient(135deg, #1e88e5, #1565c0);
+    color: white;
+    transform: translateY(-3px);
+    border-color: #1565c0;
+}
+
+.amenidad-icon {
+    font-size: 1.5rem;
+    color: #1e88e5;
+}
+
+.amenidad-item:hover .amenidad-icon {
+    color: white;
+}
+
+/* Servicios extra */
+.servicios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.servicio-card {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border: 2px solid #e3f2fd;
+    border-radius: 15px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.servicio-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #1e88e5, #1565c0);
+    transform: scaleX(0);
+    transition: all 0.3s ease;
+}
+
+.servicio-card:hover::before {
+    transform: scaleX(1);
+}
+
+.servicio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(30, 136, 229, 0.2);
+    border-color: #1e88e5;
+}
+
+.servicio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.servicio-precio {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e88e5;
+}
+
+/* Habitaciones similares */
+.habitaciones-similares {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.habitacion-similar {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.habitacion-similar:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.habitacion-imagen {
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.habitacion-info {
+    padding: 1.5rem;
+}
+
+.habitacion-titulo {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1a237e;
+    margin-bottom: 0.5rem;
+}
+
+.habitacion-precio {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e88e5;
+    margin-bottom: 1rem;
+}
+
+/* Acciones fijas */
+.acciones-fijas {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.accion-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-reservar {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+}
+
+.btn-comparar {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.btn-compartir {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+}
+
+.accion-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Modal de comparación */
+.modal-comparacion {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.modal-content-comparacion {
+    background: white;
+    border-radius: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .imagen-gallery {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(3, 200px);
+    }
+    
+    .gallery-main {
+        grid-row: span 1;
+    }
+    
+    .specs-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    
+    .acciones-fijas {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    .accion-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.section-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.section-card:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.section-card:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.section-card:nth-child(5) {
+    animation-delay: 0.4s;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section de la Habitación -->
+<section class="habitacion-hero">
+    <div class="hero-content">
+        <h1 class="hero-title">Habitación {{ habitacion.numero }}</h1>
+        <p class="hero-subtitle">{{ habitacion.tipo_hab.nombre }}</p>
+        <div class="hero-price">${{ "%.2f"|format(habitacion.precio) }} / noche</div>
+        <div class="hero-actions">
+            <a href="#reservar" class="btn-hero btn-primary-hero">
+                <i class="fas fa-calendar-check"></i>
+                Reservar Ahora
+            </a>
+            <button class="btn-hero btn-secondary-hero" onclick="toggleComparacion()">
+                <i class="fas fa-balance-scale"></i>
+                Comparar
+            </button>
+            <button class="btn-hero btn-secondary-hero" onclick="compartirHabitacion()">
+                <i class="fas fa-share-alt"></i>
+                Compartir
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Contenido Principal -->
+<div class="habitacion-content">
+    
+    <!-- Galería de Imágenes -->
+    <div class="section-card">
+        <div class="section-header" onclick="toggleSection('galeria')">
+            <h2 class="section-title">
+                <i class="fas fa-images"></i>
+                Galería de Imágenes
+            </h2>
+            <div class="expand-icon">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+        <div class="section-content" id="galeria-content">
+            <div class="imagen-gallery">
+                <div class="gallery-item gallery-main" 
+                     style="background-image: url('{{ habitacion.imagen_url or "/static/images/room-1.jpg" }}')"
+                     onclick="abrirGaleria(0)">
+                    <div class="gallery-overlay">
+                        <i class="fas fa-search-plus" style="font-size: 2rem; color: white;"></i>
+                    </div>
+                </div>
+                <div class="gallery-item" 
+                     style="background-image: url('/static/images/room-detail-1.jpg')"
+                     onclick="abrirGaleria(1)">
+                    <div class="gallery-overlay">
+                        <i class="fas fa-search-plus" style="font-size: 1.5rem; color: white;"></i>
+                    </div>
+                </div>
+                <div class="gallery-item" 
+                     style="background-image: url('/static/images/room-detail-2.jpg')"
+                     onclick="abrirGaleria(2)">
+                    <div class="gallery-overlay">
+                        <i class="fas fa-search-plus" style="font-size: 1.5rem; color: white;"></i>
+                    </div>
+                </div>
+                <div class="gallery-item" 
+                     style="background-image: url('/static/images/room-detail-3.jpg')"
+                     onclick="abrirGaleria(3)">
+                    <div class="gallery-overlay">
+                        <i class="fas fa-search-plus" style="font-size: 1.5rem; color: white;"></i>
+                    </div>
+                </div>
+                <div class="gallery-item" 
+                     style="background-image: url('/static/images/room-detail-4.jpg')"
+                     onclick="abrirGaleria(4)">
+                    <div class="gallery-overlay">
+                        <i class="fas fa-search-plus" style="font-size: 1.5rem; color: white;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Especificaciones -->
+    <div class="section-card">
+        <div class="section-header" onclick="toggleSection('especificaciones')">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Especificaciones
+            </h2>
+            <div class="expand-icon">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+        <div class="section-content" id="especificaciones-content">
+            <div class="specs-grid">
+                <div class="spec-item">
+                    <div class="spec-icon">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <div class="spec-title">Capacidad</div>
+                    <div class="spec-value">{{ habitacion.capacidad }} personas</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="spec-title">Precio por noche</div>
+                    <div class="spec-value">${{ "%.2f"|format(habitacion.precio) }}</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="spec-title">Tipo</div>
+                    <div class="spec-value">{{ habitacion.tipo_hab.nombre }}</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="spec-title">Estado</div>
+                    <div class="spec-value">{{ "Disponible" if habitacion.disponible else "Ocupada" }}</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <h3 style="color: #1a237e; margin-bottom: 1rem;">Descripción</h3>
+                <p style="font-size: 1.1rem; line-height: 1.6; color: #666;">
+                    {{ habitacion.tipo_hab.descripcion or "Disfruta de una experiencia única en nuestra habitación premium. Diseñada con los más altos estándares de confort y elegancia, cada detalle ha sido cuidadosamente seleccionado para garantizar tu máximo bienestar durante tu estadía." }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Amenidades -->
+    <div class="section-card">
+        <div class="section-header" onclick="toggleSection('amenidades')">
+            <h2 class="section-title">
+                <i class="fas fa-star"></i>
+                Amenidades Incluidas
+            </h2>
+            <div class="expand-icon">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+        <div class="section-content" id="amenidades-content">
+            <div class="amenidades-grid">
+                <div class="amenidad-item" data-tooltip="Internet de alta velocidad incluido">
+                    <i class="fas fa-wifi amenidad-icon"></i>
+                    <span>WiFi de alta velocidad</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Smart TV con servicios de streaming">
+                    <i class="fas fa-tv amenidad-icon"></i>
+                    <span>TV de pantalla plana</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Climatización personalizada">
+                    <i class="fas fa-snowflake amenidad-icon"></i>
+                    <span>Aire acondicionado</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Baño completo con amenidades premium">
+                    <i class="fas fa-bath amenidad-icon"></i>
+                    <span>Baño privado completo</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Cafetera Nespresso y minibar surtido">
+                    <i class="fas fa-coffee amenidad-icon"></i>
+                    <span>Cafetera y minibar</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Caja fuerte digital para objetos de valor">
+                    <i class="fas fa-shield-alt amenidad-icon"></i>
+                    <span>Caja de seguridad</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Servicio 24/7 disponible">
+                    <i class="fas fa-concierge-bell amenidad-icon"></i>
+                    <span>Servicio a la habitación</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Estacionamiento gratuito para huéspedes">
+                    <i class="fas fa-parking amenidad-icon"></i>
+                    <span>Estacionamiento incluido</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Gimnasio totalmente equipado">
+                    <i class="fas fa-dumbbell amenidad-icon"></i>
+                    <span>Acceso al gimnasio</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Piscina climatizada con vista panorámica">
+                    <i class="fas fa-swimming-pool amenidad-icon"></i>
+                    <span>Piscina climatizada</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Spa y centro de bienestar">
+                    <i class="fas fa-spa amenidad-icon"></i>
+                    <span>Acceso al spa</span>
+                </div>
+                <div class="amenidad-item" data-tooltip="Desayuno buffet continental incluido">
+                    <i class="fas fa-utensils amenidad-icon"></i>
+                    <span>Desayuno incluido</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Servicios Extra -->
+    <div class="section-card">
+        <div class="section-header" onclick="toggleSection('servicios')">
+            <h2 class="section-title">
+                <i class="fas fa-plus-circle"></i>
+                Servicios Adicionales
+            </h2>
+            <div class="expand-icon">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+        <div class="section-content" id="servicios-content">
+            <div class="servicios-grid">
+                {% for servicio in servicios %}
+                <div class="servicio-card">
+                    <div class="servicio-header">
+                        <h4 style="color: #1a237e; margin: 0;">{{ servicio.nombre }}</h4>
+                        <span class="servicio-precio">${{ "%.2f"|format(servicio.precio) }}</span>
+                    </div>
+                    <p style="color: #666; margin-bottom: 1rem;">{{ servicio.descripcion }}</p>
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus"></i>
+                        Agregar
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Habitaciones Similares -->
+    {% if habitaciones_similares %}
+    <div class="section-card">
+        <div class="section-header" onclick="toggleSection('similares')">
+            <h2 class="section-title">
+                <i class="fas fa-heart"></i>
+                Te Puede Interesar
+            </h2>
+            <div class="expand-icon">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+        <div class="section-content" id="similares-content">
+            <div class="habitaciones-similares">
+                {% for similar in habitaciones_similares %}
+                <div class="habitacion-similar">
+                    <div class="habitacion-imagen" 
+                         style="background-image: url('{{ similar.imagen_url or "/static/images/room-default.jpg" }}')">
+                    </div>
+                    <div class="habitacion-info">                            <h4 class="habitacion-titulo">Habitación {{ similar.numero }} - {{ similar.tipo_hab.nombre }}</h4>
+                        <p class="habitacion-precio">${{ "%.2f"|format(similar.precio) }} / noche</p>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                            Capacidad: {{ similar.capacidad }} personas
+                        </p>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="{{ url_for('main.detalle_habitacion', habitacion_id=similar.id) }}" 
+                               class="btn btn-primary btn-sm flex-fill">
+                                Ver Detalles
+                            </a>
+                            <button class="btn btn-outline-primary btn-sm" 
+                                    onclick="agregarComparacion({{ similar.id }})">
+                                <i class="fas fa-balance-scale"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sección de Reserva -->
+    <div class="section-card" id="reservar">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-calendar-check"></i>
+                Realizar Reserva
+            </h2>
+        </div>
+        <div class="section-content">
+            <form action="{{ url_for('main.nueva_reserva') }}" method="POST" style="max-width: 600px;">
+                <input type="hidden" name="habitacion_id" value="{{ habitacion.id }}">
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="fecha_inicio" class="form-label">Fecha de entrada</label>
+                        <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="fecha_fin" class="form-label">Fecha de salida</label>
+                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" required>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="numero_huespedes" class="form-label">Número de huéspedes</label>
+                        <select class="form-control" id="numero_huespedes" name="numero_huespedes" required>
+                            {% for i in range(1, habitacion.capacidad + 1) %}
+                            <option value="{{ i }}">{{ i }} {% if i == 1 %}huésped{% else %}huéspedes{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Precio estimado</label>
+                        <div class="form-control" style="background: #f8f9fa; font-weight: 600; color: #1e88e5;">
+                            $<span id="precio-total">{{ "%.2f"|format(habitacion.precio) }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="observaciones" class="form-label">Observaciones especiales (opcional)</label>
+                    <textarea class="form-control" id="observaciones" name="observaciones" rows="3" 
+                              placeholder="Solicitudes especiales, preferencias de habitación, etc."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-calendar-check"></i>
+                    Confirmar Reserva
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Fijas -->
+<div class="acciones-fijas">
+    <button class="accion-btn btn-reservar" onclick="document.getElementById('reservar').scrollIntoView()" title="Reservar">
+        <i class="fas fa-calendar-check"></i>
+    </button>
+    <button class="accion-btn btn-comparar" onclick="toggleComparacion()" title="Comparar">
+        <i class="fas fa-balance-scale"></i>
+    </button>
+    <button class="accion-btn btn-compartir" onclick="compartirHabitacion()" title="Compartir">
+        <i class="fas fa-share-alt"></i>
+    </button>
+</div>
+
+<!-- Modal de Galería -->
+<div class="modal-galeria" id="modalGaleria">
+    <div class="modal-galeria-content">
+        <button class="modal-close" onclick="cerrarGaleria()">&times;</button>
+        <div class="galeria-navegacion">
+            <button class="nav-btn nav-prev" onclick="navegarGaleria(-1)">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <img id="imagenActual" src="" alt="Imagen de habitación" class="imagen-modal">
+            <button class="nav-btn nav-next" onclick="navegarGaleria(1)">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        <div class="galeria-thumbnails">
+            <!-- Thumbnails se llenarán dinámicamente -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Comparación -->
+<div class="modal-comparacion" id="modalComparacion">
+    <div class="modal-content-comparacion">
+        <button class="modal-close" onclick="toggleComparacion()">&times;</button>
+        <h3 style="color: #1a237e; margin-bottom: 2rem;">Comparar Habitaciones</h3>
+        <div id="comparacion-content">
+            <p>Selecciona habitaciones para comparar...</p>
+            <div class="row">
+                {% for habitacion_comp in todas_habitaciones[:6] %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>Habitación {{ habitacion_comp.numero }}</h6>
+                            <p class="text-muted">{{ habitacion_comp.tipo.nombre }}</p>
+                            <p class="text-primary">${{ "%.2f"|format(habitacion_comp.precio) }}/noche</p>
+                            <button class="btn btn-outline-primary btn-sm" 
+                                    onclick="agregarComparacion({{ habitacion_comp.id }})">
+                                Comparar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+// Array de imágenes para la galería
+const imagenesHabitacion = [
+    '{{ habitacion.imagen_url or "/static/images/room-1.jpg" }}',
+    '/static/images/room-detail-1.jpg',
+    '/static/images/room-detail-2.jpg',
+    '/static/images/room-detail-3.jpg',
+    '/static/images/room-detail-4.jpg'
+];
+
+let imagenActualIndex = 0;
+
+// Funciones para secciones expandibles
+function toggleSection(sectionId) {
+    const content = document.getElementById(sectionId + '-content');
+    const icon = content.parentElement.querySelector('.expand-icon i');
+    
+    if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        icon.style.transform = 'rotate(0deg)';
+    } else {
+        content.classList.add('collapsed');
+        icon.style.transform = 'rotate(-90deg)';
+    }
+}
+
+// Funciones de galería
+function abrirGaleria(index) {
+    imagenActualIndex = index;
+    const modal = document.getElementById('modalGaleria');
+    const imagen = document.getElementById('imagenActual');
+    
+    imagen.src = imagenesHabitacion[index];
+    modal.style.display = 'block';
+    
+    // Crear thumbnails
+    crearThumbnails();
+    actualizarThumbnailActivo();
+    
+    // Prevenir scroll del body
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarGaleria() {
+    const modal = document.getElementById('modalGaleria');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function navegarGaleria(direccion) {
+    imagenActualIndex += direccion;
+    
+    if (imagenActualIndex >= imagenesHabitacion.length) {
+        imagenActualIndex = 0;
+    }
+    if (imagenActualIndex < 0) {
+        imagenActualIndex = imagenesHabitacion.length - 1;
+    }
+    
+    const imagen = document.getElementById('imagenActual');
+    imagen.src = imagenesHabitacion[imagenActualIndex];
+    actualizarThumbnailActivo();
+}
+
+function crearThumbnails() {
+    const container = document.querySelector('.galeria-thumbnails');
+    container.innerHTML = '';
+    
+    imagenesHabitacion.forEach((img, index) => {
+        const thumbnail = document.createElement('img');
+        thumbnail.src = img;
+        thumbnail.className = 'thumbnail';
+        thumbnail.onclick = () => cambiarImagen(index);
+        container.appendChild(thumbnail);
+    });
+}
+
+function cambiarImagen(index) {
+    imagenActualIndex = index;
+    const imagen = document.getElementById('imagenActual');
+    imagen.src = imagenesHabitacion[index];
+    actualizarThumbnailActivo();
+}
+
+function actualizarThumbnailActivo() {
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    thumbnails.forEach((thumb, index) => {
+        thumb.classList.toggle('active', index === imagenActualIndex);
+    });
+}
+
+// Navegación con teclado en galería
+document.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('modalGaleria');
+    if (modal.style.display === 'block') {
+        if (e.key === 'ArrowLeft') navegarGaleria(-1);
+        if (e.key === 'ArrowRight') navegarGaleria(1);
+        if (e.key === 'Escape') cerrarGaleria();
+    }
+});
+
+// Cálculo de precio en tiempo real
+document.getElementById('fecha_inicio').addEventListener('change', calcularPrecio);
+document.getElementById('fecha_fin').addEventListener('change', calcularPrecio);
+
+function calcularPrecio() {
+    const fechaInicio = new Date(document.getElementById('fecha_inicio').value);
+    const fechaFin = new Date(document.getElementById('fecha_fin').value);
+    
+    if (fechaInicio && fechaFin && fechaFin > fechaInicio) {
+        const dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24));
+        const precioNoche = {{ habitacion.precio }};
+        const total = dias * precioNoche;
+        document.getElementById('precio-total').textContent = total.toFixed(2);
+        
+        // Mostrar desglose
+        const breakdown = document.getElementById('precio-breakdown');
+        if (breakdown) {
+            breakdown.innerHTML = `
+                <small class="text-muted">
+                    ${dias} noche${dias > 1 ? 's' : ''} × $${precioNoche.toFixed(2)} = $${total.toFixed(2)}
+                </small>
+            `;
+        }
+    }
+}
+
+// Funciones de comparación mejoradas
+let habitacionesComparacion = [{{ habitacion.id }}];
+
+function toggleComparacion() {
+    const modal = document.getElementById('modalComparacion');
+    modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    
+    if (modal.style.display === 'block') {
+        cargarComparacion();
+    }
+}
+
+function agregarComparacion(habitacionId) {
+    if (!habitacionesComparacion.includes(habitacionId)) {
+        if (habitacionesComparacion.length >= 4) {
+            mostrarNotificacion('Máximo 4 habitaciones para comparar', 'warning');
+            return;
+        }
+        habitacionesComparacion.push(habitacionId);
+        mostrarNotificacion('Habitación agregada a la comparación', 'success');
+        actualizarContadorComparacion();
+    } else {
+        mostrarNotificacion('Esta habitación ya está en la comparación', 'info');
+    }
+}
+
+function eliminarDeComparacion(habitacionId) {
+    habitacionesComparacion = habitacionesComparacion.filter(id => id !== habitacionId);
+    mostrarNotificacion('Habitación eliminada de la comparación', 'info');
+    actualizarContadorComparacion();
+    cargarComparacion();
+}
+
+function actualizarContadorComparacion() {
+    const contador = document.querySelector('.contador-comparacion');
+    if (contador) {
+        contador.textContent = habitacionesComparacion.length;
+        contador.style.display = habitacionesComparacion.length > 1 ? 'block' : 'none';
+    }
+}
+
+function cargarComparacion() {
+    // Aquí implementarías la carga AJAX de los datos de comparación
+    console.log('Cargando comparación para habitaciones:', habitacionesComparacion);
+}
+
+// Sistema de notificaciones
+function mostrarNotificacion(mensaje, tipo = 'info') {
+    const notificacion = document.createElement('div');
+    notificacion.className = `notification notification-${tipo}`;
+    notificacion.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${getIconoTipo(tipo)}"></i>
+            <span>${mensaje}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notificacion);
+    
+    // Mostrar animación
+    setTimeout(() => notificacion.classList.add('show'), 100);
+    
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+        notificacion.classList.remove('show');
+        setTimeout(() => document.body.removeChild(notificacion), 300);
+    }, 3000);
+}
+
+function getIconoTipo(tipo) {
+    const iconos = {
+        'success': 'check-circle',
+        'warning': 'exclamation-triangle',
+        'error': 'times-circle',
+        'info': 'info-circle'
+    };
+    return iconos[tipo] || 'info-circle';
+}
+
+// Función para compartir mejorada
+function compartirHabitacion() {
+    const datos = {
+        title: 'Habitación {{ habitacion.numero }} - {{ habitacion.tipo_hab.nombre }}',
+        text: 'Descubre esta increíble habitación en Hotel Paraíso Real. {{ (habitacion.tipo_hab.descripcion or "Una experiencia única de hospedaje")[:100] }}...',
+        url: window.location.href
+    };
+    
+    if (navigator.share) {
+        navigator.share(datos);
+    } else {
+        // Fallback mejorado
+        const url = window.location.href;
+        const texto = `${datos.title}\n${datos.text}\n${url}`;
+        
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url);
+            mostrarNotificacion('¡Enlace copiado al portapapeles!', 'success');
+        } else {
+            // Fallback para navegadores muy antiguos
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            mostrarNotificacion('¡Enlace copiado!', 'success');
+        }
+    }
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fecha mínima como hoy
+    const today = new Date().toISOString().split('T')[0];
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
+    
+    fechaInicio.min = today;
+    fechaFin.min = today;
+    
+    // Cuando cambie fecha inicio, actualizar mínimo de fecha fin
+    fechaInicio.addEventListener('change', function() {
+        fechaFin.min = this.value;
+    });
+    
+    // Cerrar modales al hacer clic fuera
+    document.getElementById('modalComparacion').addEventListener('click', function(e) {
+        if (e.target === this) toggleComparacion();
+    });
+    
+    document.getElementById('modalGaleria').addEventListener('click', function(e) {
+        if (e.target === this) cerrarGaleria();
+    });
+    
+    // Actualizar contador de comparación
+    actualizarContadorComparacion();
+    
+    // Animación de entrada para las secciones
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+    
+    document.querySelectorAll('.section-card').forEach(card => {
+        observer.observe(card);
+    });
+    
+    // Precargar imágenes de la galería
+    imagenesHabitacion.forEach(src => {
+        const img = new Image();
+        img.src = src;
+    });
+});
+
+// Función de scroll suave para navegación
+function scrollToSection(sectionId) {
+    document.getElementById(sectionId).scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+    });
+}
+
+// Lazy loading para imágenes
+function lazyLoadImages() {
+    const images = document.querySelectorAll('img[data-src]');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.remove('loading-placeholder');
+                imageObserver.unobserve(img);
+            }
+        });
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+}
+
+// Inicializar lazy loading
+document.addEventListener('DOMContentLoaded', lazyLoadImages);
+</script>
+{% endblock %}

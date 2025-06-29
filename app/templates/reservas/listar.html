@@ -1,0 +1,200 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Reservas{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-calendar-check me-2"></i>Gestión de Reservas
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Reservas</li>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas Mini -->
+<div class="stats-mini">
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ reservas|length }}</div>
+        <div class="stat-mini-label">Total Reservas</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ reservas|selectattr("estado", "equalto", "confirmada")|list|length }}</div>
+        <div class="stat-mini-label">Confirmadas</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ reservas|selectattr("estado", "equalto", "pendiente")|list|length }}</div>
+        <div class="stat-mini-label">Pendientes</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ reservas|selectattr("estado", "equalto", "cancelada")|list|length }}</div>
+        <div class="stat-mini-label">Canceladas</div>
+    </div>
+</div>
+
+<!-- Acciones Principales -->
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-list me-2 text-primary"></i>
+            Lista de Reservas
+        </h3>
+        <a href="{{ url_for('main.nueva_reserva') }}" class="btn btn-crud-primary">
+            <i class="fas fa-plus me-2"></i>Nueva Reserva
+        </a>
+    </div>
+
+    {% if reservas %}
+    <div class="table-responsive">
+        <table class="table crud-table mb-0">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                    <th><i class="fas fa-user me-1"></i>Cliente</th>
+                    <th><i class="fas fa-bed me-1"></i>Habitación</th>
+                    <th><i class="fas fa-calendar me-1"></i>Check-in</th>
+                    <th><i class="fas fa-calendar me-1"></i>Check-out</th>
+                    <th><i class="fas fa-info-circle me-1"></i>Estado</th>
+                    <th><i class="fas fa-concierge-bell me-1"></i>Servicios</th>
+                    <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reservas %}
+                <tr>
+                    <td><strong>#{{ r.id }}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-circle text-muted me-2"></i>
+                            <div>
+                                <strong>{{ r.usuario.nombre }}</strong>
+                                <br>
+                                <small class="text-muted">{{ r.usuario.email }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-door-closed text-muted me-2"></i>
+                            <div>
+                                <strong>{{ r.habitacion.numero }}</strong>
+                                <br>
+                                <small class="text-muted">{{ r.habitacion.tipo }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-center">
+                            <strong>{{ r.fecha_inicio.strftime('%d/%m/%Y') if r.fecha_inicio else 'N/A' }}</strong>
+                            <br>
+                            <small class="text-muted">{{ r.fecha_inicio.strftime('%H:%M') if r.fecha_inicio else '' }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-center">
+                            <strong>{{ r.fecha_fin.strftime('%d/%m/%Y') if r.fecha_fin else 'N/A' }}</strong>
+                            <br>
+                            <small class="text-muted">{{ r.fecha_fin.strftime('%H:%M') if r.fecha_fin else '' }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        {% if r.estado == 'confirmada' %}
+                            <span class="badge badge-status badge-available">
+                                <i class="fas fa-check me-1"></i>Confirmada
+                            </span>
+                        {% elif r.estado == 'pendiente' %}
+                            <span class="badge badge-status" style="background: linear-gradient(135deg, #ffc107, #fd7e14); color: white;">
+                                <i class="fas fa-clock me-1"></i>Pendiente
+                            </span>
+                        {% elif r.estado == 'cancelada' %}
+                            <span class="badge badge-status badge-unavailable">
+                                <i class="fas fa-times me-1"></i>Cancelada
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ r.estado|title }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if r.servicios %}
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for s in r.servicios[:2] %}
+                                    <span class="badge bg-light text-dark">{{ s.nombre }}</span>
+                                {% endfor %}
+                                {% if r.servicios|length > 2 %}
+                                    <span class="badge bg-info text-white">+{{ r.servicios|length - 2 }}</span>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <small class="text-muted">Sin servicios</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('main.editar_reserva', id=r.id) }}" 
+                               class="btn btn-crud-warning" 
+                               title="Editar reserva">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('main.eliminar_reserva', id=r.id) }}" 
+                                  method="post" 
+                                  style="display:inline;"
+                                  onsubmit="return confirm('¿Está seguro de que desea eliminar la reserva #{{ r.id }}? Esta acción no se puede deshacer.')">
+                                <button type="submit" 
+                                        class="btn btn-crud-danger" 
+                                        title="Eliminar reserva">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-check text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+        <h4 class="text-muted mt-3">No hay reservas registradas</h4>
+        <p class="text-muted">Comience creando su primera reserva en el sistema.</p>
+        <a href="{{ url_for('main.nueva_reserva') }}" class="btn btn-crud-primary mt-3">
+            <i class="fas fa-plus me-2"></i>Crear Primera Reserva
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Información Adicional -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-chart-bar me-2 text-info"></i>
+        Estadísticas de Reservas
+    </h5>
+    <div class="row">
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Total de reservas:</strong> 
+                <span class="text-primary">{{ reservas|length }}</span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Confirmadas:</strong> 
+                <span class="text-success">{{ reservas|selectattr("estado", "equalto", "confirmada")|list|length }}</span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Pendientes:</strong> 
+                <span class="text-warning">{{ reservas|selectattr("estado", "equalto", "pendiente")|list|length }}</span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Canceladas:</strong> 
+                <span class="text-danger">{{ reservas|selectattr("estado", "equalto", "cancelada")|list|length }}</span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

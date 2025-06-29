@@ -1,0 +1,352 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Nueva Opinión{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-plus-circle me-2"></i>Nueva Opinión
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item"><a href="{{ url_for('main.listar_opiniones') }}">Opiniones</a></li>
+    <li class="breadcrumb-item active">Nueva</li>
+{% endblock %}
+
+{% block content %}
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-star me-2 text-primary"></i>
+            Comparte tu Experiencia
+        </h3>
+        <a href="{{ url_for('main.listar_opiniones') }}" class="btn btn-crud-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+        </a>
+    </div>
+
+    <form method="POST" class="needs-validation" novalidate>
+        <div class="row">
+            <!-- Columna Izquierda -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="habitacion_id" class="form-label">
+                        <i class="fas fa-bed me-1 text-primary"></i>
+                        Habitación Evaluada <span class="text-danger">*</span>
+                    </label>
+                    <select name="habitacion_id" id="habitacion_id" class="form-select" required>
+                        <option value="">Seleccione la habitación</option>
+                        {% for h in habitaciones %}
+                            <option value="{{ h.id }}" data-numero="{{ h.numero }}" data-tipo="{{ h.tipo }}">
+                                Habitación {{ h.numero }} - {{ h.tipo }} (${{ "%.2f"|format(h.precio) }}/noche)
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">
+                        Por favor seleccione la habitación que desea evaluar.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Seleccione la habitación donde se hospedó.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="calificacion" class="form-label">
+                        <i class="fas fa-star me-1 text-primary"></i>
+                        Calificación General <span class="text-danger">*</span>
+                    </label>
+                    
+                    <!-- Rating con Estrellas Interactivas -->
+                    <div class="star-rating-input mb-2">
+                        {% for i in range(1, 6) %}
+                            <i class="far fa-star rating-star" 
+                               data-rating="{{ i }}" 
+                               style="font-size: 2rem; color: #ddd; cursor: pointer; margin-right: 0.25rem;"
+                               onmouseover="highlightStars({{ i }})" 
+                               onclick="selectRating({{ i }})"
+                               title="{{ i }} estrella{% if i > 1 %}s{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                    
+                    <input type="hidden" name="calificacion" id="calificacion" required>
+                    <div class="invalid-feedback">
+                        Por favor seleccione una calificación del 1 al 5.
+                    </div>
+                    
+                    <div class="rating-labels">
+                        <small class="text-muted">
+                            <span id="rating-text">Haga clic en las estrellas para calificar</span>
+                        </small>
+                    </div>
+                    
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        1⭐ = Muy malo | 2⭐ = Malo | 3⭐ = Regular | 4⭐ = Bueno | 5⭐ = Excelente
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="comentario" class="form-label">
+                        <i class="fas fa-comment me-1 text-primary"></i>
+                        Comentario sobre su Estadía <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" 
+                              id="comentario" 
+                              name="comentario" 
+                              rows="6" 
+                              placeholder="Comparta su experiencia: ¿Cómo fue el servicio? ¿La habitación cumplió sus expectativas? ¿Qué destacaría o mejoraría?" 
+                              required></textarea>
+                    <div class="invalid-feedback">
+                        Por favor escriba un comentario sobre su experiencia.
+                    </div>
+                    <div class="form-text d-flex justify-content-between">
+                        <span>
+                            <i class="fas fa-info-circle me-1"></i>
+                            Mínimo 10 caracteres
+                        </span>
+                        <span id="char-count" class="text-muted">0 caracteres</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista Previa de la Opinión -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-crud alert-info">
+                    <h6 class="mb-2">
+                        <i class="fas fa-eye me-1"></i>
+                        Vista Previa de su Opinión
+                    </h6>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user-circle text-muted me-2" style="font-size: 2rem;"></i>
+                                    <div>
+                                        <h6 class="mb-0">{{ current_user.nombre if current_user.is_authenticated else 'Usuario Anónimo' }}</h6>
+                                        <small class="text-muted">Habitación <span id="preview-habitacion">--</span></small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div id="preview-stars" class="mb-1">
+                                        {% for i in range(5) %}
+                                            <i class="far fa-star text-muted"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">{{ moment().strftime('%d/%m/%Y') }}</small>
+                                </div>
+                            </div>
+                            <p class="mb-0" id="preview-comentario">Escriba su comentario para ver la vista previa...</p>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Así se verá su opinión en el sistema de reseñas del hotel.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+            <a href="{{ url_for('main.listar_opiniones') }}" class="btn btn-crud-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-crud-primary">
+                <i class="fas fa-paper-plane me-2"></i>Enviar Opinión
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Información de Ayuda -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-lightbulb me-2 text-warning"></i>
+        Consejos para una Opinión Constructiva
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    <strong>Sea específico:</strong> Mencione aspectos concretos como limpieza, servicio, comodidad
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    <strong>Sea honesto:</strong> Su opinión ayuda a otros huéspedes y al hotel a mejorar
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    <strong>Sea constructivo:</strong> Si algo no le gustó, explique qué podría mejorarse
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    <strong>Considere todo:</strong> Desde el check-in hasta el check-out
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    <strong>Sea respetuoso:</strong> Use un lenguaje apropiado y cortés
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i>
+                    <strong>Destaque lo positivo:</strong> Mencione lo que más le gustó de su estadía
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let selectedRating = 0;
+const ratingTexts = {
+    1: "⭐ Muy malo - No cumplió expectativas",
+    2: "⭐⭐ Malo - Muchas cosas por mejorar", 
+    3: "⭐⭐⭐ Regular - Experiencia promedio",
+    4: "⭐⭐⭐⭐ Bueno - Recomendable",
+    5: "⭐⭐⭐⭐⭐ Excelente - Superó expectativas"
+};
+
+// Validación de formulario Bootstrap
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false || selectedRating === 0) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    if (selectedRating === 0) {
+                        alert('❌ Por favor seleccione una calificación del 1 al 5 estrellas');
+                    }
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Funciones para el rating de estrellas
+function highlightStars(rating) {
+    const stars = document.querySelectorAll('.rating-star');
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.className = 'fas fa-star rating-star';
+            star.style.color = '#ffc107';
+        } else {
+            star.className = 'far fa-star rating-star';
+            star.style.color = '#ddd';
+        }
+    });
+    
+    // Mostrar texto de rating al pasar el mouse
+    if (rating > 0) {
+        document.getElementById('rating-text').textContent = ratingTexts[rating];
+    }
+}
+
+function selectRating(rating) {
+    selectedRating = rating;
+    document.getElementById('calificacion').value = rating;
+    highlightStars(rating);
+    document.getElementById('rating-text').textContent = ratingTexts[rating];
+    actualizarVistaPrevia();
+}
+
+// Restaurar estrellas cuando se quita el mouse
+document.querySelector('.star-rating-input').addEventListener('mouseleave', function() {
+    if (selectedRating > 0) {
+        highlightStars(selectedRating);
+        document.getElementById('rating-text').textContent = ratingTexts[selectedRating];
+    } else {
+        const stars = document.querySelectorAll('.rating-star');
+        stars.forEach(star => {
+            star.className = 'far fa-star rating-star';
+            star.style.color = '#ddd';
+        });
+        document.getElementById('rating-text').textContent = 'Haga clic en las estrellas para calificar';
+    }
+});
+
+// Contador de caracteres
+document.getElementById('comentario').addEventListener('input', function() {
+    const charCount = this.value.length;
+    document.getElementById('char-count').textContent = charCount + ' caracteres';
+    
+    if (charCount < 10) {
+        document.getElementById('char-count').className = 'text-danger';
+    } else if (charCount < 50) {
+        document.getElementById('char-count').className = 'text-warning';
+    } else {
+        document.getElementById('char-count').className = 'text-success';
+    }
+    
+    actualizarVistaPrevia();
+});
+
+// Vista previa en tiempo real
+function actualizarVistaPrevia() {
+    const habitacionSelect = document.getElementById('habitacion_id');
+    const comentario = document.getElementById('comentario').value;
+    
+    // Actualizar habitación en vista previa
+    if (habitacionSelect.value) {
+        const selectedOption = habitacionSelect.options[habitacionSelect.selectedIndex];
+        document.getElementById('preview-habitacion').textContent = selectedOption.dataset.numero;
+    } else {
+        document.getElementById('preview-habitacion').textContent = '--';
+    }
+    
+    // Actualizar comentario en vista previa
+    if (comentario.trim()) {
+        document.getElementById('preview-comentario').textContent = comentario;
+    } else {
+        document.getElementById('preview-comentario').textContent = 'Escriba su comentario para ver la vista previa...';
+    }
+    
+    // Actualizar estrellas en vista previa
+    const previewStars = document.querySelectorAll('#preview-stars i');
+    previewStars.forEach((star, index) => {
+        if (index < selectedRating) {
+            star.className = 'fas fa-star text-warning';
+        } else {
+            star.className = 'far fa-star text-muted';
+        }
+    });
+}
+
+// Event listeners
+document.getElementById('habitacion_id').addEventListener('change', actualizarVistaPrevia);
+
+// Inicializar vista previa
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarVistaPrevia();
+});
+
+// Función mock para moment (compatibilidad)
+function moment() {
+    return {
+        strftime: function(format) {
+            return new Date().toLocaleDateString('es-ES');
+        }
+    };
+}
+</script>
+{% endblock %}

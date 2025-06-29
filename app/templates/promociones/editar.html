@@ -1,0 +1,408 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Editar Promoción{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-edit me-2"></i>Editar Promoción
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item"><a href="{{ url_for('main.listar_promociones') }}">Promociones</a></li>
+    <li class="breadcrumb-item active">Editar #{{ promocion.id }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-tags me-2 text-primary"></i>
+            Modificar Promoción
+        </h3>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('main.listar_promociones') }}" class="btn btn-crud-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+            </a>
+            {% set hoy = moment().date() %}
+            {% set activa = promocion.fecha_inicio <= hoy <= promocion.fecha_fin %}
+            {% set proxima = promocion.fecha_inicio > hoy %}
+            {% set vencida = promocion.fecha_fin < hoy %}
+            {% if activa %}
+                <span class="badge badge-status badge-available">Activa</span>
+            {% elif proxima %}
+                <span class="badge badge-status" style="background: linear-gradient(135deg, #ffc107, #fd7e14); color: white;">Próxima</span>
+            {% elif vencida %}
+                <span class="badge badge-status badge-unavailable">Vencida</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="POST" class="needs-validation" novalidate>
+        <div class="row">
+            <!-- Columna Izquierda -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="descripcion" class="form-label">
+                        <i class="fas fa-align-left me-1 text-primary"></i>
+                        Descripción de la Promoción <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" 
+                              id="descripcion" 
+                              name="descripcion" 
+                              rows="3" 
+                              placeholder="Ej: Descuento de temporada baja, Oferta fin de semana..." 
+                              required>{{ promocion.descripcion }}</textarea>
+                    <div class="invalid-feedback">
+                        Por favor ingrese una descripción para la promoción.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Descripción actual: "{{ promocion.descripcion[:50] + '...' if promocion.descripcion|length > 50 else promocion.descripcion }}"
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="descuento" class="form-label">
+                        <i class="fas fa-percentage me-1 text-primary"></i>
+                        Porcentaje de Descuento <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <input type="number" 
+                               class="form-control" 
+                               id="descuento" 
+                               name="descuento" 
+                               step="0.01" 
+                               min="0" 
+                               max="100" 
+                               value="{{ promocion.descuento }}" 
+                               required>
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <div class="invalid-feedback">
+                        Por favor ingrese un descuento válido entre 0% y 100%.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Descuento actual: <strong class="text-success">{{ "%.1f"|format(promocion.descuento) }}%</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="fecha_inicio" class="form-label">
+                        <i class="fas fa-calendar-plus me-1 text-primary"></i>
+                        Fecha de Inicio <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" 
+                           class="form-control" 
+                           id="fecha_inicio" 
+                           name="fecha_inicio" 
+                           value="{{ promocion.fecha_inicio }}" 
+                           required>
+                    <div class="invalid-feedback">
+                        Por favor seleccione la fecha de inicio de la promoción.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Fecha actual: <strong>{{ promocion.fecha_inicio.strftime('%d/%m/%Y') if promocion.fecha_inicio else 'N/A' }}</strong>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="fecha_fin" class="form-label">
+                        <i class="fas fa-calendar-minus me-1 text-primary"></i>
+                        Fecha de Finalización <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" 
+                           class="form-control" 
+                           id="fecha_fin" 
+                           name="fecha_fin" 
+                           value="{{ promocion.fecha_fin }}" 
+                           required>
+                    <div class="invalid-feedback">
+                        Por favor seleccione la fecha de finalización de la promoción.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Fecha actual: <strong>{{ promocion.fecha_fin.strftime('%d/%m/%Y') if promocion.fecha_fin else 'N/A' }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Cambios -->
+        <div class="alert alert-crud alert-warning mb-4">
+            <h6 class="mb-2">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                Información Importante sobre los Cambios
+            </h6>
+            <ul class="mb-0 ps-3">
+                {% if activa %}
+                <li><strong>Promoción activa:</strong> Los cambios se aplicarán inmediatamente a nuevas reservas.</li>
+                {% elif proxima %}
+                <li><strong>Promoción próxima:</strong> Puede modificar todos los campos antes de que inicie.</li>
+                {% elif vencida %}
+                <li><strong>Promoción vencida:</strong> Solo se permiten cambios para referencia histórica.</li>
+                {% endif %}
+                <li>Las reservas existentes mantendrán las condiciones originales.</li>
+                <li>Los cambios en fechas pueden afectar la disponibilidad de la promoción.</li>
+            </ul>
+        </div>
+
+        <!-- Vista Previa de la Promoción -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-crud alert-info">
+                    <h6 class="mb-2">
+                        <i class="fas fa-eye me-1"></i>
+                        Vista Previa de los Cambios
+                    </h6>
+                    <div class="card bg-light border-success">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-2" id="preview-descripcion">{{ promocion.descripcion }}</h5>
+                                    <p class="card-text mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            Válida del <span id="preview-inicio">{{ promocion.fecha_inicio.strftime('%d/%m/%Y') if promocion.fecha_inicio else '--/--/----' }}</span> 
+                                            al <span id="preview-fin">{{ promocion.fecha_fin.strftime('%d/%m/%Y') if promocion.fecha_fin else '--/--/----' }}</span>
+                                        </small>
+                                    </p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            Duración: <span id="preview-duracion">
+                                                {% if promocion.fecha_inicio and promocion.fecha_fin %}
+                                                    {{ (promocion.fecha_fin - promocion.fecha_inicio).days }} días
+                                                {% else %}
+                                                    -- días
+                                                {% endif %}
+                                            </span>
+                                        </small>
+                                    </p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; font-size: 1.2rem; padding: 0.5rem 1rem;" id="preview-descuento">
+                                        {{ "%.1f"|format(promocion.descuento) }}% OFF
+                                    </span>
+                                    <br>
+                                    <small class="text-success mt-1 d-block" id="preview-ahorro">
+                                        <i class="fas fa-piggy-bank me-1"></i>
+                                        Ahorro en $100: ${{ "%.2f"|format(100 * promocion.descuento / 100) }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+            <a href="{{ url_for('main.listar_promociones') }}" class="btn btn-crud-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-crud-primary">
+                <i class="fas fa-save me-2"></i>Actualizar Promoción
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Información de la Promoción -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-info-circle me-2 text-info"></i>
+        Información Actual de la Promoción
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <p class="mb-2">
+                <strong>ID en el Sistema:</strong> 
+                <span class="text-primary">#{{ promocion.id }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Descuento Actual:</strong> 
+                <span class="text-success">{{ "%.1f"|format(promocion.descuento) }}%</span>
+            </p>
+            <p class="mb-2">
+                <strong>Estado:</strong> 
+                {% if activa %}
+                    <span class="text-success fw-bold">Activa</span>
+                {% elif proxima %}
+                    <span class="text-warning fw-bold">Próxima</span>
+                {% elif vencida %}
+                    <span class="text-danger fw-bold">Vencida</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-2">
+                <strong>Fecha de Inicio:</strong> 
+                <span class="text-dark">{{ promocion.fecha_inicio.strftime('%d/%m/%Y') if promocion.fecha_inicio else 'N/A' }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Fecha de Fin:</strong> 
+                <span class="text-dark">{{ promocion.fecha_fin.strftime('%d/%m/%Y') if promocion.fecha_fin else 'N/A' }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Duración:</strong> 
+                <span class="text-info">
+                    {% if promocion.fecha_inicio and promocion.fecha_fin %}
+                        {{ (promocion.fecha_fin - promocion.fecha_inicio).days }} días
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validación de formulario Bootstrap
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Validación de fechas personalizada
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
+    
+    fechaInicio.addEventListener('change', function() {
+        // Actualizar fecha mínima de fin
+        fechaFin.min = this.value;
+        
+        // Si la fecha de fin es anterior a la nueva fecha de inicio, limpiarla
+        if (fechaFin.value && fechaFin.value < this.value) {
+            if (confirm('La fecha de finalización es anterior a la nueva fecha de inicio. ¿Desea actualizar la fecha de finalización?')) {
+                fechaFin.value = '';
+            } else {
+                this.value = '{{ promocion.fecha_inicio }}';
+                return;
+            }
+        }
+        
+        actualizarVistaPrevia();
+    });
+    
+    fechaFin.addEventListener('change', function() {
+        // Validar que la fecha de fin sea posterior a la de inicio
+        if (fechaInicio.value && this.value < fechaInicio.value) {
+            alert('❌ La fecha de finalización debe ser posterior a la fecha de inicio');
+            this.value = '{{ promocion.fecha_fin }}';
+            return;
+        }
+        
+        actualizarVistaPrevia();
+    });
+});
+
+// Vista previa en tiempo real
+function actualizarVistaPrevia() {
+    const descripcion = document.getElementById('descripcion').value || 'Descripción de la promoción';
+    const descuento = parseFloat(document.getElementById('descuento').value) || 0;
+    const fechaInicio = document.getElementById('fecha_inicio').value;
+    const fechaFin = document.getElementById('fecha_fin').value;
+    
+    document.getElementById('preview-descripcion').textContent = descripcion;
+    document.getElementById('preview-descuento').textContent = descuento.toFixed(1) + '% OFF';
+    
+    // Calcular ahorro en $100
+    const ahorro = (100 * descuento / 100).toFixed(2);
+    document.getElementById('preview-ahorro').innerHTML = 
+        '<i class="fas fa-piggy-bank me-1"></i>Ahorro en $100: $' + ahorro;
+    
+    if (fechaInicio) {
+        const fechaInicioFormateada = new Date(fechaInicio).toLocaleDateString('es-ES');
+        document.getElementById('preview-inicio').textContent = fechaInicioFormateada;
+    }
+    
+    if (fechaFin) {
+        const fechaFinFormateada = new Date(fechaFin).toLocaleDateString('es-ES');
+        document.getElementById('preview-fin').textContent = fechaFinFormateada;
+    }
+    
+    // Calcular duración
+    if (fechaInicio && fechaFin) {
+        const inicio = new Date(fechaInicio);
+        const fin = new Date(fechaFin);
+        const duracion = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24));
+        document.getElementById('preview-duracion').textContent = duracion + ' días';
+    }
+}
+
+// Event listeners para vista previa
+document.getElementById('descripcion').addEventListener('input', actualizarVistaPrevia);
+document.getElementById('descuento').addEventListener('input', function(e) {
+    let value = parseFloat(e.target.value);
+    if (value > 100) {
+        e.target.value = 100;
+        value = 100;
+    }
+    if (value < 0) {
+        e.target.value = 0;
+        value = 0;
+    }
+    actualizarVistaPrevia();
+});
+
+// Confirmación de cambios importantes
+document.querySelector('form').addEventListener('submit', function(e) {
+    const descripcionOriginal = '{{ promocion.descripcion }}';
+    const descuentoOriginal = {{ promocion.descuento }};
+    
+    const descripcionNueva = document.getElementById('descripcion').value;
+    const descuentoNuevo = parseFloat(document.getElementById('descuento').value);
+    
+    let cambios = [];
+    
+    if (descripcionOriginal !== descripcionNueva) {
+        cambios.push('• Descripción de la promoción');
+    }
+    
+    if (Math.abs(descuentoOriginal - descuentoNuevo) > 0.01) {
+        cambios.push('• Porcentaje de descuento');
+    }
+    
+    if (cambios.length > 0) {
+        const confirmacion = confirm('Se detectaron cambios importantes:\n\n' + cambios.join('\n') + '\n\n¿Está seguro de continuar?');
+        if (!confirmacion) {
+            e.preventDefault();
+        }
+    }
+});
+
+// Función para obtener fecha actual (mock para compatibility)
+function moment() {
+    return {
+        date: function() {
+            return new Date().toISOString().split('T')[0];
+        }
+    };
+}
+</script>
+{% endblock %}

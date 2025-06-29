@@ -1,0 +1,297 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Editar Opinión - Hotel Paraíso Real{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .rating-input {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+    
+    .rating-input input {
+        display: none;
+    }
+    
+    .rating-input label {
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #ddd;
+        transition: all 0.3s ease;
+        margin: 0 2px;
+    }
+    
+    .rating-input input:checked ~ label,
+    .rating-input input:checked ~ label ~ label,
+    .rating-input label:hover,
+    .rating-input label:hover ~ label {
+        color: #ffd700;
+        transform: scale(1.1);
+    }
+    
+    .preview-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        margin-top: 1rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .preview-rating {
+        display: flex;
+        align-items: center;
+        margin: 0.5rem 0;
+    }
+    
+    .preview-stars {
+        color: #ffd700;
+        margin-right: 0.5rem;
+    }
+    
+    .character-counter {
+        text-align: right;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .character-counter.warning {
+        color: #fd7e14;
+    }
+    
+    .character-counter.danger {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-edit me-2"></i>Editar Opinión
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+            <li class="breadcrumb-item"><a href="{{ url_for('main.listar_opiniones') }}">Opiniones</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Modificar Opinión</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="opinionForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="habitacion_id" class="form-label">
+                                <i class="fas fa-bed me-1"></i>Habitación
+                            </label>
+                            <select class="form-select" id="habitacion_id" name="habitacion_id" required>
+                                <option value="">Seleccionar habitación...</option>
+                                {% for h in habitaciones %}
+                                    <option value="{{ h.id }}" {% if opinion.habitacion_id == h.id %}selected{% endif %}>
+                                        Habitación {{ h.numero }} - {{ h.tipo_habitacion.nombre if h.tipo_habitacion else 'Sin tipo' }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fecha_opinion" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Fecha de Opinión
+                            </label>
+                            <input type="date" class="form-control" id="fecha_opinion" 
+                                   value="{{ opinion.fecha_opinion.strftime('%Y-%m-%d') if opinion.fecha_opinion else '' }}" readonly>
+                            <small class="text-muted">Fecha de creación original</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="calificacion" class="form-label">
+                            <i class="fas fa-star me-1"></i>Calificación
+                        </label>
+                        <div class="rating-input" id="ratingInput">
+                            <input type="radio" id="star5" name="calificacion" value="5" {% if opinion.calificacion == 5 %}checked{% endif %}>
+                            <label for="star5">⭐</label>
+                            <input type="radio" id="star4" name="calificacion" value="4" {% if opinion.calificacion == 4 %}checked{% endif %}>
+                            <label for="star4">⭐</label>
+                            <input type="radio" id="star3" name="calificacion" value="3" {% if opinion.calificacion == 3 %}checked{% endif %}>
+                            <label for="star3">⭐</label>
+                            <input type="radio" id="star2" name="calificacion" value="2" {% if opinion.calificacion == 2 %}checked{% endif %}>
+                            <label for="star2">⭐</label>
+                            <input type="radio" id="star1" name="calificacion" value="1" {% if opinion.calificacion == 1 %}checked{% endif %}>
+                            <label for="star1">⭐</label>
+                        </div>
+                        <div class="text-center">
+                            <small class="text-muted" id="ratingText">Calificación actual: {{ opinion.calificacion }}/5</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="comentario" class="form-label">
+                            <i class="fas fa-comment me-1"></i>Comentario
+                        </label>
+                        <textarea class="form-control" id="comentario" name="comentario" rows="4" 
+                                  maxlength="500" placeholder="Comparte tu experiencia..." required>{{ opinion.comentario }}</textarea>
+                        <div class="character-counter" id="charCounter">{{ opinion.comentario|length }}/500 caracteres</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Actualizar Opinión
+                        </button>
+                        <a href="{{ url_for('main.listar_opiniones') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Vista Previa -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-gradient-info text-white">
+                <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Vista Previa</h6>
+            </div>
+            <div class="card-body">
+                <div class="preview-card" id="previewCard">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-user-circle fa-2x me-2"></i>
+                        <div>
+                            <h6 class="mb-0">{{ session.nombre if session.nombre else 'Usuario' }}</h6>
+                            <small class="opacity-75" id="previewDate">{{ opinion.fecha_opinion.strftime('%d/%m/%Y') if opinion.fecha_opinion else 'Hoy' }}</small>
+                        </div>
+                    </div>
+                    <div class="preview-rating">
+                        <span class="preview-stars" id="previewStars">
+                            {% for i in range(opinion.calificacion) %}⭐{% endfor %}
+                        </span>
+                        <span id="previewRating">{{ opinion.calificacion }}/5</span>
+                    </div>
+                    <p class="mb-2" id="previewComment">{{ opinion.comentario }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="opacity-75">Habitación: <span id="previewRoom">{{ opinion.habitacion.numero if opinion.habitacion else '--' }}</span></small>
+                        <span class="badge bg-light text-dark">Modificada</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consejos -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient-warning text-white">
+                <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Consejos</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Sé específico en tu comentario</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Menciona aspectos de limpieza y comodidad</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Tu calificación ayuda a otros huéspedes</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Máximo 500 caracteres</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const comentario = document.getElementById('comentario');
+    const charCounter = document.getElementById('charCounter');
+    const previewComment = document.getElementById('previewComment');
+    const previewStars = document.getElementById('previewStars');
+    const previewRating = document.getElementById('previewRating');
+    const previewRoom = document.getElementById('previewRoom');
+    const habitacionSelect = document.getElementById('habitacion_id');
+    const ratingInputs = document.querySelectorAll('input[name="calificacion"]');
+    const ratingText = document.getElementById('ratingText');
+
+    // Actualizar contador de caracteres y vista previa del comentario
+    function updateCharCounter() {
+        const length = comentario.value.length;
+        charCounter.textContent = `${length}/500 caracteres`;
+        
+        if (length > 450) {
+            charCounter.className = 'character-counter danger';
+        } else if (length > 400) {
+            charCounter.className = 'character-counter warning';
+        } else {
+            charCounter.className = 'character-counter';
+        }
+        
+        previewComment.textContent = comentario.value || 'Tu comentario aparecerá aquí...';
+    }
+
+    // Actualizar vista previa del rating
+    function updateRatingPreview() {
+        const selectedRating = document.querySelector('input[name="calificacion"]:checked')?.value || 0;
+        const stars = '⭐'.repeat(selectedRating);
+        previewStars.textContent = stars;
+        previewRating.textContent = `${selectedRating}/5`;
+        ratingText.textContent = `Calificación seleccionada: ${selectedRating}/5`;
+    }
+
+    // Actualizar vista previa de habitación
+    function updateRoomPreview() {
+        const selectedOption = habitacionSelect.options[habitacionSelect.selectedIndex];
+        if (selectedOption.value) {
+            const roomText = selectedOption.textContent;
+            previewRoom.textContent = roomText.split(' - ')[0];
+        } else {
+            previewRoom.textContent = '--';
+        }
+    }
+
+    // Event listeners
+    comentario.addEventListener('input', updateCharCounter);
+    habitacionSelect.addEventListener('change', updateRoomPreview);
+    
+    ratingInputs.forEach(input => {
+        input.addEventListener('change', updateRatingPreview);
+    });
+
+    // Inicializar vista previa
+    updateCharCounter();
+    updateRatingPreview();
+    updateRoomPreview();
+
+    // Validación del formulario
+    document.getElementById('opinionForm').addEventListener('submit', function(e) {
+        const rating = document.querySelector('input[name="calificacion"]:checked');
+        if (!rating) {
+            e.preventDefault();
+            alert('Por favor, selecciona una calificación.');
+            return;
+        }
+        
+        if (comentario.value.trim().length < 10) {
+            e.preventDefault();
+            alert('El comentario debe tener al menos 10 caracteres.');
+            comentario.focus();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

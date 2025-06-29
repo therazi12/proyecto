@@ -1,0 +1,284 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Editar Habitación{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-edit me-2"></i>Editar Habitación #{{ habitacion.numero }}
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item"><a href="{{ url_for('main.listar_habitaciones') }}">Habitaciones</a></li>
+    <li class="breadcrumb-item active">Editar #{{ habitacion.numero }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-bed me-2 text-primary"></i>
+            Modificar Información
+        </h3>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('main.listar_habitaciones') }}" class="btn btn-crud-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+            </a>
+            <span class="badge badge-status {{ 'badge-available' if habitacion.disponible else 'badge-unavailable' }}">
+                {{ 'Disponible' if habitacion.disponible else 'Ocupada' }}
+            </span>
+        </div>
+    </div>
+
+    <form method="POST" class="needs-validation" novalidate>
+        <div class="row">
+            <!-- Columna Izquierda -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="numero" class="form-label">
+                        <i class="fas fa-door-closed me-1 text-primary"></i>
+                        Número de Habitación <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="numero" 
+                           name="numero" 
+                           value="{{ habitacion.numero }}" 
+                           placeholder="Ej: 101, 205, A-301" 
+                           required>
+                    <div class="invalid-feedback">
+                        Por favor ingrese el número de habitación.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Identificador único de la habitación.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tipo" class="form-label">
+                        <i class="fas fa-tag me-1 text-primary"></i>
+                        Tipo de Habitación <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="tipo" 
+                           name="tipo" 
+                           value="{{ habitacion.tipo }}" 
+                           placeholder="Ej: Simple, Doble, Suite" 
+                           required>
+                    <div class="invalid-feedback">
+                        Por favor ingrese el tipo de habitación.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="precio" class="form-label">
+                        <i class="fas fa-dollar-sign me-1 text-primary"></i>
+                        Precio por Noche <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" 
+                               class="form-control" 
+                               id="precio" 
+                               name="precio" 
+                               step="0.01" 
+                               min="0" 
+                               value="{{ habitacion.precio }}" 
+                               placeholder="0.00" 
+                               required>
+                    </div>
+                    <div class="invalid-feedback">
+                        Por favor ingrese un precio válido.
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Precio actual: <strong class="text-success">${{ "%.2f"|format(habitacion.precio) }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="descripcion" class="form-label">
+                        <i class="fas fa-align-left me-1 text-primary"></i>
+                        Descripción
+                    </label>
+                    <textarea class="form-control" 
+                              id="descripcion" 
+                              name="descripcion" 
+                              rows="3" 
+                              placeholder="Descripción de la habitación, amenidades, etc.">{{ habitacion.descripcion or '' }}</textarea>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Descripción que aparecerá en los detalles de la habitación.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tipo_id" class="form-label">
+                        <i class="fas fa-list me-1 text-primary"></i>
+                        Categoría <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="tipo_id" name="tipo_id" required>
+                        <option value="">Seleccione una categoría</option>
+                        {% for t in tipos %}
+                            <option value="{{ t.id }}" {% if habitacion.tipo_id == t.id %}selected{% endif %}>
+                                {{ t.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">
+                        Por favor seleccione una categoría de habitación.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="disponible" 
+                               name="disponible" 
+                               {% if habitacion.disponible %}checked{% endif %}>
+                        <label class="form-check-label" for="disponible">
+                            <i class="fas fa-toggle-on me-1 text-success"></i>
+                            <strong>Habitación Disponible</strong>
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Estado actual: 
+                        <span class="fw-bold {{ 'text-success' if habitacion.disponible else 'text-danger' }}">
+                            {{ 'Disponible' if habitacion.disponible else 'Ocupada' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Cambios -->
+        <div class="alert alert-crud alert-warning mb-4">
+            <h6 class="mb-2">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                Información Importante
+            </h6>
+            <ul class="mb-0 ps-3">
+                <li>Los cambios en el precio afectarán las nuevas reservas, no las existentes.</li>
+                <li>Si cambia la disponibilidad, asegúrese de que no haya conflictos con reservas activas.</li>
+                <li>Modificar el número de habitación puede afectar las referencias en el sistema.</li>
+            </ul>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+            <a href="{{ url_for('main.listar_habitaciones') }}" class="btn btn-crud-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-crud-primary">
+                <i class="fas fa-save me-2"></i>Actualizar Habitación
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Información de la Habitación -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-info-circle me-2 text-info"></i>
+        Información Actual de la Habitación
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <p class="mb-2">
+                <strong>ID en el Sistema:</strong> 
+                <span class="text-primary">#{{ habitacion.id }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Número de Habitación:</strong> 
+                <span class="text-dark">{{ habitacion.numero }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Precio Actual:</strong> 
+                <span class="text-success">${{ "%.2f"|format(habitacion.precio) }}</span>
+            </p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-2">
+                <strong>Tipo:</strong> 
+                <span class="text-dark">{{ habitacion.tipo }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Estado:</strong> 
+                <span class="fw-bold {{ 'text-success' if habitacion.disponible else 'text-danger' }}">
+                    {{ 'Disponible' if habitacion.disponible else 'Ocupada' }}
+                </span>
+            </p>
+            {% if habitacion.descripcion %}
+            <p class="mb-2">
+                <strong>Descripción:</strong> 
+                <span class="text-muted">{{ habitacion.descripcion }}</span>
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validación de formulario Bootstrap
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Formateo automático del precio
+document.getElementById('precio').addEventListener('input', function(e) {
+    let value = parseFloat(e.target.value);
+    if (!isNaN(value)) {
+        e.target.value = value.toFixed(2);
+    }
+});
+
+// Confirmación de cambios importantes
+document.querySelector('form').addEventListener('submit', function(e) {
+    const numeroOriginal = '{{ habitacion.numero }}';
+    const numeroNuevo = document.getElementById('numero').value;
+    const disponibleOriginal = {{ 'true' if habitacion.disponible else 'false' }};
+    const disponibleNuevo = document.getElementById('disponible').checked;
+    
+    let mensaje = '';
+    
+    if (numeroOriginal !== numeroNuevo) {
+        mensaje += '• Está cambiando el número de habitación\n';
+    }
+    
+    if (disponibleOriginal !== disponibleNuevo) {
+        mensaje += '• Está cambiando la disponibilidad de la habitación\n';
+    }
+    
+    if (mensaje) {
+        const confirmacion = confirm('Se detectaron cambios importantes:\n\n' + mensaje + '\n¿Está seguro de continuar?');
+        if (!confirmacion) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

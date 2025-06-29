@@ -1,0 +1,160 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Habitaciones{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-bed me-2"></i>Gestión de Habitaciones
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">Habitaciones</li>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas Mini -->
+<div class="stats-mini">
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ habitaciones|length }}</div>
+        <div class="stat-mini-label">Total Habitaciones</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ habitaciones|selectattr("disponible")|list|length }}</div>
+        <div class="stat-mini-label">Disponibles</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ habitaciones|rejectattr("disponible")|list|length }}</div>
+        <div class="stat-mini-label">Ocupadas</div>
+    </div>
+</div>
+
+<!-- Acciones Principales -->
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-list me-2 text-primary"></i>
+            Lista de Habitaciones
+        </h3>
+        <a href="{{ url_for('main.nueva_habitacion') }}" class="btn btn-crud-primary">
+            <i class="fas fa-plus me-2"></i>Nueva Habitación
+        </a>
+    </div>
+
+    {% if habitaciones %}
+    <div class="table-responsive">
+        <table class="table crud-table mb-0">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                    <th><i class="fas fa-door-closed me-1"></i>Número</th>
+                    <th><i class="fas fa-tag me-1"></i>Tipo</th>
+                    <th><i class="fas fa-dollar-sign me-1"></i>Precio</th>
+                    <th><i class="fas fa-info-circle me-1"></i>Descripción</th>
+                    <th><i class="fas fa-toggle-on me-1"></i>Estado</th>
+                    <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in habitaciones %}
+                <tr>
+                    <td><strong>#{{ h.id }}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-bed text-muted me-2"></i>
+                            <strong>{{ h.numero }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark">{{ h.tipo }}</span>
+                    </td>
+                    <td>
+                        <strong class="text-success">${{ "%.2f"|format(h.precio) }}</strong>
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {{ h.descripcion[:50] + '...' if h.descripcion and h.descripcion|length > 50 else h.descripcion or 'Sin descripción' }}
+                        </small>
+                    </td>
+                    <td>
+                        {% if h.disponible %}
+                            <span class="badge badge-status badge-available">
+                                <i class="fas fa-check me-1"></i>Disponible
+                            </span>
+                        {% else %}
+                            <span class="badge badge-status badge-unavailable">
+                                <i class="fas fa-times me-1"></i>Ocupada
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('main.editar_habitacion', id=h.id) }}" 
+                               class="btn btn-crud-warning" 
+                               title="Editar habitación">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('main.eliminar_habitacion', id=h.id) }}" 
+                                  method="post" 
+                                  style="display:inline;"
+                                  onsubmit="return confirm('¿Está seguro de que desea eliminar la habitación {{ h.numero }}? Esta acción no se puede deshacer.')">
+                                <button type="submit" 
+                                        class="btn btn-crud-danger" 
+                                        title="Eliminar habitación">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-bed text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+        <h4 class="text-muted mt-3">No hay habitaciones registradas</h4>
+        <p class="text-muted">Comience agregando su primera habitación al sistema.</p>
+        <a href="{{ url_for('main.nueva_habitacion') }}" class="btn btn-crud-primary mt-3">
+            <i class="fas fa-plus me-2"></i>Crear Primera Habitación
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Información Adicional -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-info-circle me-2 text-info"></i>
+        Información del Sistema
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <p class="mb-2">
+                <strong>Total de habitaciones:</strong> 
+                <span class="text-primary">{{ habitaciones|length }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Habitaciones disponibles:</strong> 
+                <span class="text-success">{{ habitaciones|selectattr("disponible")|list|length }}</span>
+            </p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-2">
+                <strong>Habitaciones ocupadas:</strong> 
+                <span class="text-danger">{{ habitaciones|rejectattr("disponible")|list|length }}</span>
+            </p>
+            <p class="mb-2">
+                <strong>Tasa de ocupación:</strong> 
+                <span class="text-info">
+                    {{ "%.1f"|format((habitaciones|rejectattr("disponible")|list|length / habitaciones|length * 100) if habitaciones|length > 0 else 0) }}%
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

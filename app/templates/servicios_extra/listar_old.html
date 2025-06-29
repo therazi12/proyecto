@@ -1,0 +1,370 @@
+{% extends "crud_base.html" %}
+
+{% block title %}Servicios Extra - Hotel Paraíso Real{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-concierge-bell me-2"></i>Gestión de Servicios Extra
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if current_user.rol == 'cliente' %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_cliente') }}">Dashboard</a></li>
+    {% else %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard_admin') }}">Dashboard</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">Servicios Extra</li>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas Mini -->
+<div class="stats-mini">
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">{{ servicios|length }}</div>
+        <div class="stat-mini-label">Total Servicios</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">${{ "%.0f"|format(servicios|map(attribute='precio')|sum) if servicios|length > 0 else 0 }}</div>
+        <div class="stat-mini-label">Valor Total</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">${{ "%.2f"|format((servicios|map(attribute='precio')|sum / servicios|length) if servicios|length > 0 else 0) }}</div>
+        <div class="stat-mini-label">Precio Promedio</div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-number">${{ "%.2f"|format(servicios|map(attribute='precio')|max) if servicios|length > 0 else 0 }}</div>
+        <div class="stat-mini-label">Más Caro</div>
+    </div>
+</div>
+
+<!-- Acciones Principales -->
+<div class="crud-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="fas fa-list me-2 text-primary"></i>
+            Lista de Servicios Extra
+        </h3>
+        <a href="{{ url_for('main.nuevo_servicio_extra') }}" class="btn btn-crud-primary">
+            <i class="fas fa-plus me-2"></i>Nuevo Servicio
+        </a>
+    </div>
+
+    {% if servicios %}
+    <div class="table-responsive">
+        <table class="table crud-table mb-0">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                    <th><i class="fas fa-tag me-1"></i>Nombre</th>
+                    <th><i class="fas fa-align-left me-1"></i>Descripción</th>
+                    <th><i class="fas fa-dollar-sign me-1"></i>Precio</th>
+                    <th><i class="fas fa-chart-line me-1"></i>Popularidad</th>
+                    <th><i class="fas fa-star me-1"></i>Categoría</th>
+                    <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in servicios %}
+                {% set reservas_count = s.reservas|length if s.reservas else 0 %}
+                {% set categoria_precio = 'económico' if s.precio < 20 else ('medio' if s.precio < 50 else 'premium') %}
+                <tr>
+                    <td><strong>#{{ s.id }}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas {{ s.icono if s.icono else 'fa-concierge-bell' }} text-primary me-2 fa-lg"></i>
+                            <div>
+                                <strong>{{ s.nombre }}</strong>
+                                <br><small class="text-muted">{{ s.nombre|length }} caracteres</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if s.descripcion %}
+                            <div title="{{ s.descripcion }}">
+                                {{ s.descripcion[:60] + '...' if s.descripcion|length > 60 else s.descripcion }}
+                            </div>
+                            {% if s.descripcion|length > 60 %}
+                                <small class="text-muted">Ver completa...</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted fst-italic">Sin descripción</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="text-center">
+                            <span class="badge bg-success fs-6 px-3 py-2">${{ "%.2f"|format(s.precio) }}</span>
+                            <br>
+                            <small class="text-muted">
+                                {% if categoria_precio == 'económico' %}
+                                    <span class="text-success">Económico</span>
+                                {% elif categoria_precio == 'medio' %}
+                                    <span class="text-warning">Medio</span>
+                                {% else %}
+                                    <span class="text-danger">Premium</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-center">
+                            {% if reservas_count > 0 %}
+                                <div class="progress mb-1" style="height: 8px;">
+                                    {% set max_reservas = servicios|map(attribute='reservas')|map('length')|max %}
+                                    {% set popularidad = (reservas_count / max_reservas * 100) if max_reservas > 0 else 0 %}
+                                    <div class="progress-bar bg-info" role="progressbar" 
+                                         style="width: {{ popularidad }}%" aria-valuenow="{{ popularidad }}" 
+                                         aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small>{{ reservas_count }} contrataciones</small>
+                            {% else %}
+                                <span class="text-muted">Sin uso</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if categoria_precio == 'económico' %}
+                            <span class="badge badge-status badge-available">
+                                <i class="fas fa-dollar-sign me-1"></i>Económico
+                            </span>
+                        {% elif categoria_precio == 'medio' %}
+                            <span class="badge badge-status" style="background: linear-gradient(135deg, #ffc107, #fd7e14); color: white;">
+                                <i class="fas fa-star me-1"></i>Medio
+                            </span>
+                        {% else %}
+                            <span class="badge badge-status" style="background: linear-gradient(135deg, #dc3545, #6f42c1); color: white;">
+                                <i class="fas fa-crown me-1"></i>Premium
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('main.editar_servicio_extra', id=s.id) }}" 
+                               class="btn btn-crud-warning" 
+                               title="Editar servicio">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if reservas_count == 0 %}
+                                <form action="{{ url_for('main.eliminar_servicio_extra', id=s.id) }}" 
+                                      method="post" 
+                                      style="display:inline;"
+                                      onsubmit="return confirm('¿Está seguro de que desea eliminar el servicio {{ s.nombre }}? Esta acción no se puede deshacer.')">
+                                    <button type="submit" 
+                                            class="btn btn-crud-danger" 
+                                            title="Eliminar servicio">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button class="btn btn-crud-danger" 
+                                        disabled 
+                                        title="No se puede eliminar - está en uso en reservas">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-concierge-bell text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+        <h4 class="text-muted mt-3">No hay servicios extra registrados</h4>
+        <p class="text-muted">Comience agregando servicios adicionales para mejorar la experiencia de sus huéspedes.</p>
+        <a href="{{ url_for('main.nuevo_servicio_extra') }}" class="btn btn-crud-primary mt-3">
+            <i class="fas fa-plus me-2"></i>Crear Primer Servicio
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Análisis de Precios -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-chart-bar me-2 text-info"></i>
+        Análisis de Precios
+    </h5>
+    <div class="row">
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Total servicios:</strong> 
+                <span class="text-primary">{{ servicios|length }}</span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Precio promedio:</strong> 
+                <span class="text-success">
+                    ${{ "%.2f"|format((servicios|map(attribute='precio')|sum / servicios|length) if servicios|length > 0 else 0) }}
+                </span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Servicios económicos:</strong> 
+                <span class="text-info">
+                    {% set economicos = servicios|selectattr('precio', 'lt', 20)|list|length %}
+                    {{ economicos }} ({{ "%.1f"|format((economicos / servicios|length * 100) if servicios|length > 0 else 0) }}%)
+                </span>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p class="mb-2">
+                <strong>Servicios premium:</strong> 
+                <span class="text-warning">
+                    {% set premium = servicios|selectattr('precio', 'ge', 50)|list|length %}
+                    {{ premium }} ({{ "%.1f"|format((premium / servicios|length * 100) if servicios|length > 0 else 0) }}%)
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Servicios Más Populares -->
+{% if servicios %}
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-fire me-2 text-danger"></i>
+        Servicios Más Demandados
+    </h5>
+    <div class="row">
+        {% for s in servicios|selectattr('reservas')|sort(attribute='reservas', reverse=true)[:3] %}
+        {% set reservas_count = s.reservas|length %}
+        <div class="col-md-4 mb-3">
+            <div class="card border-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas {{ s.icono if s.icono else 'fa-concierge-bell' }} text-primary me-2 fa-lg"></i>
+                            <h6 class="card-title mb-0">{{ s.nombre[:20] + '...' if s.nombre|length > 20 else s.nombre }}</h6>
+                        </div>
+                        <span class="badge bg-success">${{ "%.2f"|format(s.precio) }}</span>
+                    </div>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            {{ s.descripcion[:50] + '...' if s.descripcion and s.descripcion|length > 50 else (s.descripcion or 'Sin descripción') }}
+                        </small>
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-success">
+                            <i class="fas fa-chart-line me-1"></i>{{ reservas_count }} contrataciones
+                        </small>
+                        <a href="{{ url_for('main.editar_servicio_extra', id=s.id) }}" class="btn btn-sm btn-outline-success">
+                            Ver detalles
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Categorías de Servicios -->
+{% if servicios %}
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-layer-group me-2 text-warning"></i>
+        Distribución por Categoría de Precio
+    </h5>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign text-success fa-2x mb-2"></i>
+                    <h5 class="card-title text-success">Económicos</h5>
+                    <h3 class="text-success">
+                        {% set economicos = servicios|selectattr('precio', 'lt', 20)|list %}
+                        {{ economicos|length }}
+                    </h3>
+                    <p class="card-text">Hasta $19.99</p>
+                    <small class="text-muted">
+                        Promedio: ${{ "%.2f"|format((economicos|map(attribute='precio')|sum / economicos|length) if economicos|length > 0 else 0) }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <i class="fas fa-star text-warning fa-2x mb-2"></i>
+                    <h5 class="card-title text-warning">Medio</h5>
+                    <h3 class="text-warning">
+                        {% set medios = servicios|selectattr('precio', 'ge', 20)|selectattr('precio', 'lt', 50)|list %}
+                        {{ medios|length }}
+                    </h3>
+                    <p class="card-text">$20.00 - $49.99</p>
+                    <small class="text-muted">
+                        Promedio: ${{ "%.2f"|format((medios|map(attribute='precio')|sum / medios|length) if medios|length > 0 else 0) }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <i class="fas fa-crown text-danger fa-2x mb-2"></i>
+                    <h5 class="card-title text-danger">Premium</h5>
+                    <h3 class="text-danger">
+                        {% set premium = servicios|selectattr('precio', 'ge', 50)|list %}
+                        {{ premium|length }}
+                    </h3>
+                    <p class="card-text">$50.00 en adelante</p>
+                    <small class="text-muted">
+                        Promedio: ${{ "%.2f"|format((premium|map(attribute='precio')|sum / premium|length) if premium|length > 0 else 0) }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Consejos para Servicios -->
+<div class="crud-card">
+    <h5 class="mb-3">
+        <i class="fas fa-lightbulb me-2 text-success"></i>
+        Estrategias de Servicios
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Ofrecer servicios para diferentes presupuestos
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Crear paquetes combinados atractivos
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Promocionar servicios populares
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-2">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    Los servicios sin uso pueden eliminarse
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    Monitoree la demanda para ajustar precios
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    Use iconos descriptivos para mejor identificación
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+    </table>
+    <a href="{{ url_for('main.home') }}">Volver al inicio</a>
+</body>
+</html>

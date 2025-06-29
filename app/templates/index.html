@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Hotel Paraíso Real - Inicio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span></span>
+            <div>
+                <span class="lang-select">ES <span style="font-size:10px;">▼</span></span>
+            </div>
+        </div>
+    </div>
+    <!-- Header / Logo -->
+    <header class="text-center py-3">
+        <div class="hotel-logo">
+            <div class="stars">★ ★ ★ ★</div>
+            <div class="hotel-title">HOTEL PARAÍSO REAL</div>
+            <div class="hotel-subtitle">Tu descanso, nuestro compromiso</div>
+        </div>
+    </header>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white main-navbar">
+        <div class="container">
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="{{ url_for('main.home') }}">Home</a>
+                <a class="nav-link" href="#">Sobre Nosotros</a>
+                <a class="nav-link" href="#">Habitaciones</a>
+                <a class="nav-link" href="#">Reservaciones</a>
+                <a class="nav-link" href="#">Galería</a>
+                <a class="nav-link" href="#">Contactos</a>
+            </div>
+            <div class="navbar-nav">
+                <a class="nav-link btn-login-nav" href="{{ url_for('main.login') }}">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </a>
+                <a class="nav-link btn-register-nav" href="{{ url_for('main.register') }}">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </a>
+            </div>
+        </div>
+    </nav>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-overlay d-flex flex-column justify-content-center align-items-center">
+            <h1>BIENVENIDO A HOTEL PARAÍSO REAL</h1>
+            <p>Un lugar donde el confort y la elegancia se encuentran para hacer de tu estadía una experiencia inolvidable.</p>
+            <div class="d-flex gap-3 mt-3">
+                <a href="#" class="btn btn-gold btn-lg">RESERVAR AHORA</a>
+                <a href="{{ url_for('main.login') }}" class="btn btn-outline-light btn-lg">Iniciar Sesión</a>
+                <a href="{{ url_for('main.register') }}" class="btn btn-outline-light btn-lg">Registrarse</a>
+            </div>
+        </div>
+    </section>
+    <!-- Clients Section -->
+    <section class="clients-section text-center py-5">
+        <h2>NUESTROS CLIENTES SON NUESTRA MEJOR REFERENCIA</h2>
+        <p class="clients-desc mx-auto">
+            Nos esforzamos cada día para ofrecerte el mejor servicio y que vivas momentos únicos en nuestro hotel. ¡Tu satisfacción es nuestra prioridad!
+        </p>
+    </section>
+    <!-- Master Rooms -->
+    <section class="master-rooms-section py-5">
+        <h3 class="text-center mb-4">HABITACIONES DESTACADAS</h3>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-4 text-center room-card">
+                    <div class="room-img-wrap">
+                        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80" alt="Habitación Estándar">
+                        <div class="room-stars">★ ★ ★</div>
+                    </div>
+                    <h5>HABITACIÓN ESTÁNDAR<br><small>CAMA KING</small></h5>
+                    <p>Comodidad y elegancia para tu descanso.</p>
+                </div>
+                <div class="col-md-4 text-center room-card">
+                    <div class="room-img-wrap">
+                        <img src="https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=400&q=80" alt="Junior Suite">
+                        <div class="room-stars">★ ★ ★</div>
+                    </div>
+                    <h5>JUNIOR SUITE<br><small>CAMA INDIVIDUAL</small></h5>
+                    <p>Un espacio ideal para quienes buscan privacidad y confort.</p>
+                </div>
+                <div class="col-md-4 text-center room-card">
+                    <div class="room-img-wrap">
+                        <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" alt="Superior Room">
+                        <div class="room-stars">★ ★ ★</div>
+                    </div>
+                    <h5>HABITACIÓN SUPERIOR<br><small>CAMA KING</small></h5>
+                    <p>El máximo confort para una experiencia inolvidable.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Check Availability -->
+    <section class="availability-section py-5">
+        <h3 class="text-center mb-4">CONSULTAR DISPONIBILIDAD</h3>
+        <form class="row g-3 align-items-end justify-content-center availability-form">
+            <div class="col-md-2">
+                <label class="form-label">Entrada</label>
+                <input type="date" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Salida</label>
+                <input type="date" class="form-control">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Noches</label>
+                <input type="number" class="form-control" min="1" value="1">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Adultos</label>
+                <input type="number" class="form-control" min="1" value="1">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Niños</label>
+                <input type="number" class="form-control" min="0" value="0">
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="button" class="btn btn-gold">CONSULTAR</button>
+            </div>
+        </form>
+        <div class="container mt-5">
+            <div class="row text-center">
+                <div class="col icon-feature">
+                    <i class="bi bi-droplet"></i>
+                    <div>Baño privado</div>
+                </div>
+                <div class="col icon-feature">
+                    <i class="bi bi-lock"></i>
+                    <div>Caja fuerte</div>
+                </div>
+                <div class="col icon-feature">
+                    <i class="bi bi-tv"></i>
+                    <div>Televisión HD</div>
+                </div>
+                <div class="col icon-feature">
+                    <i class="bi bi-wifi"></i>
+                    <div>WiFi gratis</div>
+                </div>
+                <div class="col icon-feature">
+                    <i class="bi bi-cone-striped"></i>
+                    <div>Servicio a la habitación</div>
+                </div>
+                <div class="col icon-feature">
+                    <i class="bi bi-car-front"></i>
+                    <div>Estacionamiento</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Testimonial Section -->
+    <section class="testimonial-section">
+        <div class="testimonial-overlay d-flex flex-column justify-content-center align-items-center">
+            <h3>TESTIMONIO</h3>
+            <div class="testimonial-box">
+                <p>“Una experiencia maravillosa, el personal muy atento y las instalaciones impecables. ¡Volveré sin dudarlo!”</p>
+                <div class="testimonial-user d-flex align-items-center mt-3">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" class="rounded-circle me-2" width="40">
+                    <div>
+                        <strong>Jessica Schlochet</strong><br>
+                        <small>Marzo, 2023</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Footer -->
+    <footer class="footer-section py-4">
+        <div class="container d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <div><strong>CONTACTO</strong></div>
+                <div>PQ Box 16122, Collins Street West, Victoria 8007, Estados Unidos.</div>
+                <div>info@paraisoreal.com</div>
+                <div>(+39) 320 33002256</div>
+            </div>
+            <div class="footer-social">
+                <a href="#"><i class="bi bi-facebook"></i></a>
+                <a href="#"><i class="bi bi-twitter"></i></a>
+                <a href="#"><i class="bi bi-instagram"></i></a>
+                <a href="#"><i class="bi bi-youtube"></i></a>
+            </div>
+            <div class="footer-about">
+                <div><strong>SOBRE NOSOTROS</strong></div>
+                <div>Tu refugio de tranquilidad y lujo en el corazón de la ciudad. ¡Descubre una nueva forma de hospedarte!</div>
+            </div>
+        </div>
+        <div class="text-center mt-3" style="font-size:13px;">TODOS LOS DERECHOS RESERVADOS | HOTEL PARAÍSO REAL</div>
+    </footer>
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
